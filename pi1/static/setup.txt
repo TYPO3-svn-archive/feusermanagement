@@ -44,6 +44,7 @@ plugin.tx_feregistrationprocess_pi1 {
 				label=LL_field_password2
 				tooltip=LL_field_password2_tooltip
 				equal=password
+				jsvalidation=1
 			}
 			email {
 				required=1
@@ -51,6 +52,8 @@ plugin.tx_feregistrationprocess_pi1 {
 				type=text
 				label=LL_field_email
 				tooltip=LL_field_email_tooltip
+				validation=email
+				jsvalidation=1
 			}
 			surname {
 				type=text

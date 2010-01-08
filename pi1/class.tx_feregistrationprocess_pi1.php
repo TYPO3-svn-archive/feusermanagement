@@ -264,7 +264,7 @@ class tx_feregistrationprocess_pi1 extends tslib_pibase {
 		
 		if ($final) {
 		### SESSION LÖSCHEN ###
-			$GLOBALS["TSFE"]->fe_user->setKey("ses","ccm_reg_uid","0");
+			$GLOBALS["TSFE"]->fe_user->setKey("ses","ccm_reg_step","0");
 		}
 		return $this->pi_wrapInBaseClass($content);
 	}
@@ -277,22 +277,8 @@ class tx_feregistrationprocess_pi1 extends tslib_pibase {
 			if ($field->required) {
 				$name=$field->name;
 				$id=$field->htmlID;
-				if (!(isset($_POST[$id]) && ($_POST[$id]))) {
-					
-					$value=$_POST[$id];
-					$valueEsc=mysql_real_escape_string($value);
-					$dbNameEsc=mysql_real_escape_string($field->dbName);
-					$sql="SELECT * FROM tx_feregistrationprocess_user_info WHERE type='".$dbNameEsc."' AND content='".$valueEsc."'";
-					$res=$GLOBALS['TYPO3_DB']->sql_query($sql);
-					$found=false;
-					while ($row=$GLOBALS['TYPO3_DB']->sql_fetch_assoc($res)) {
-						$found=true;
-					}
-					
-					if (!$found) {
-						$this->errMsg=$this->prepareMessage(array($this->pi_getLL('not_enter','',FALSE),$field->label));
-						$valid=false;
-					}
+				if (!(isset($_POST[$id]) && ($_POST[$id]))) {	
+					$valid=$GLOBALS["TSFE"]->fe_user->getKey("ses",$this->prefixId.$field->htmlId);
 				}
 				
 			}
@@ -321,14 +307,15 @@ class tx_feregistrationprocess_pi1 extends tslib_pibase {
 				}
 				#t3lib_div::debug($field);
 			}
-			if ($field->onBlurValidation) {
-				switch ($field->onBlurValidation) {
+			if ($field->validation) {
+				switch ($field->validation) {
 					case "email":
 						$pattern = "^[_a-z0-9-]+(\.[_a-z0-9-]+)*@[a-z0-9-]+(\.[a-z0-9-]+)*(\.[a-z]{2,3})$";
 						
 						//$pattern="^[\\\\w-_\\.+]*[\\\\w-_\\.]\@([\\\\w]+\\\\.)+[\\\\w]+[\\\\w]$";
 						
 						if (!eregi($pattern,$_POST[$field->htmlID])) {
+							
 							$valid=false;
 							$this->errMsg=$this->pi_getLL('email_error','',FALSE);
 						}
@@ -411,7 +398,7 @@ class tx_feregistrationprocess_pi1 extends tslib_pibase {
 		$map=array();
 		if (is_array($this->conf["feuser_map."])) {
 			foreach($this->conf["feuser_map."] as $key=>$value) {
-				$map[$key]=$this->getValueFromDB($allFields[$value]);
+				$map[$key]=$this->getValueFromSession($allFields[$value]);
 				if ($key=='password') $map[$key]=encryptPW($map[$key],$this);
 			}
 		}
