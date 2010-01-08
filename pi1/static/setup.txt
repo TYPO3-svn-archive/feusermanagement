@@ -1,6 +1,10 @@
 plugin.tx_feregistrationprocess_pi1 {
 	config {
-		adminMail=dummy@yourwebsite.com
+		adminMail=dummy@youradmin.com
+		adminMailSubject=New Registration
+		userMailSubject=New Registration
+		mailFromEMail=noreply@yourwebsite.com
+		mailFromName=noreply
 		useMD5=0
 		requiredMarker=<sup><span style="color:#ff0000">*</span></sup>
 		
@@ -70,6 +74,6 @@ plugin.tx_feregistrationprocess_pi1 {
 	    tx_personalheader_apo2_plz=fav2_plz
 	    tx_personalheader_apo3_label=fav3_bez
 	    tx_personalheader_apo3_plz=fav3_plz
-	  }
+	}
 
 }

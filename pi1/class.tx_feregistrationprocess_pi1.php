@@ -53,6 +53,7 @@ class tx_feregistrationprocess_pi1 extends tslib_pibase {
 	var $requireUserConfirm=0;
 	var $requireAdminConfirm=0;
 	var $currStep=0;
+	var $baseURL='';
 	
 	function main($content,$conf)	{
 		global $TYPO3_CONF_VARS;
@@ -60,7 +61,9 @@ class tx_feregistrationprocess_pi1 extends tslib_pibase {
 		$this->pi_setPiVarDefaults();
 		$this->pi_loadLL();
 		$this->pi_USER_INT_obj=1;	// Configuring so caching is not expected. This value means that no cHash params are ever set. We do this, because it's a USER_INT object!
-		
+				
+		$this->baseURL=getTSValue('config.baseURL',$GLOBALS['TSFE']->tmpl->setup);
+		if (!$this->baseURL) return 'config.baseURL not set';
 		
 		$this->requiredMarker=getTSValue('config.requiredMarker',$conf);
 		$this->modelLib=t3lib_div::makeInstance('registration_model');
@@ -198,7 +201,7 @@ class tx_feregistrationprocess_pi1 extends tslib_pibase {
 				}";
 		}
 		$formWrapperJS='
-			function ccm_check_FormSubmit() {
+			function '.$obj->prefixId.'_check_FormSubmit() {
 				'.$formJS.'
 				return doSubmit;
 			}
@@ -395,17 +398,11 @@ class tx_feregistrationprocess_pi1 extends tslib_pibase {
 			}
 		}
 	}
-	function getValueFromDB($field,$uid="") {
-		if ($uid=="") $uid=$this->uid;
-		if (!($field->toDB)) return "";
-		$fieldDB=$field->dbName;
-		$sql="SELECT content FROM tx_feregistrationprocess_user_info WHERE id='".$uid."' AND type='".$fieldDB."'";
-		if ($res = $GLOBALS['TYPO3_DB']->sql_query($sql)) {
-			if ($row=$GLOBALS['TYPO3_DB']->sql_fetch_assoc($res)) {
-				return $row["content"];
-			}
-		}
-		return "";
+	function getValueFromSession($field,$uid="") {
+		$sesVal=$GLOBALS["TSFE"]->fe_user->getKey("ses",$this->prefixId.$field->name);
+		if ($sesVal) return $sesVal;
+		if ($field->value) return $field->value; //Wert der übers Typoscript übergeben wurde, für z.B. Hidden-Fields
+		return;
 	}
 	
 	function createNewFEUser() {
@@ -468,7 +465,7 @@ class tx_feregistrationprocess_pi1 extends tslib_pibase {
 		$res=$GLOBALS['TYPO3_DB']->sql_query($sql);
 		$row = $GLOBALS['TYPO3_DB']->sql_fetch_assoc($res);
 		
-		$confirmLink=getTSValue('config.baseURL',$this->conf).$this->cObj->getTypoLink_URL(38,array('userConfirmationToken'=>$token));
+		$confirmLink=getTSValue('config.baseURL',$this->conf).$this->cObj->getTypoLink_URL($GLOBALS['TSFE']->id,array('userConfirmationToken'=>$token,'fe_user'=>$id));
 		
 		$html=str_replace("###CONFIRMATION_LINK###",$confirmLink,$html);
 		
@@ -502,19 +499,22 @@ class tx_feregistrationprocess_pi1 extends tslib_pibase {
 			}
 		}
 		
-		$confirmLink="http://no1.k1on.de/cms/index.php?id=38&adminAction=confirm&token=$token";
-		$declineLink="http://no1.k1on.de/cms/index.php?id=38&adminAction=decline&token=$token";
+		$confirmLink=$this->baseURL.'index.php?id='.$GLOBALS['TSFE']->id.'&adminAction=confirm&token='.$token.'&fe_user='.$fe_id;
+		$declineLink=$this->baseURL.'index.php?id='.$GLOBALS['TSFE']->id.'&adminAction=decline&token='.$token.'&fe_user='.$fe_id;
 		$arr["###ADMIN_ACCEPT###"]=$confirmLink;
 		$arr["###ADMIN_DECLINE###"]=$declineLink;
 		$html=str_replace(array_keys($arr),$arr,$html);
 		
-		$adminAddr=$this->conf["config."]["adminMail"];
+		$adminAddr=getTSValue('config.adminMail',$this->conf);
+		$adminSubject=getTSValue('config.adminMailSubject',$this->conf);
+		$fromMail=getTSValue('config.mailFromEMail',$this->conf);
+		$fromName=getTSValue('config.mailFromName',$this->conf);
 		$mailObj = t3lib_div::makeInstance('t3lib_htmlmail');
 		$mailObj->start();
 		$mailObj->recipient = $adminAddr;
-		$mailObj->subject = 'Neue Registrierung';
-		$mailObj->from_email = 'noreply@apotheken.de';
-		$mailObj->from_name = 'No Reply';
+		$mailObj->subject = $adminSubject;
+		$mailObj->from_email = $fromMail;
+		$mailObj->from_name = $fromName;
 		$mailObj->addPlain($html);
 		$mailObj->setHTML($mailObj->encodeMsg($html));
 		$success=$mailObj->send($adminAddr);

@@ -2,8 +2,9 @@
 	
 class registration_view {
 	function getFormJS($field) {
-		$js="";
-		if ($field->type=="checkbox") {
+		if (!$field->jsvalidation) return;
+		$js='';
+		if ($field->type=='checkbox') {
 			if ($field->required) {
 				$js='
 					if (!(document.getElementById("'.$field->htmlID.'").checked)) {
@@ -24,7 +25,7 @@ class registration_view {
 		}
 		
 		
-		switch ($field->onBlurValidation) {
+		switch ($field->validation) {
 			case "email":
 				$js='
 					var x="";
@@ -50,10 +51,10 @@ class registration_view {
 	function getJS($field,$obj) {
 		$trueAction="";
 		$falseAction="";
-		//t3lib_div::debug($GLOBALS['TYPO3_CONF_VARS']['EXTCONF'][$this->extKey]);
+		
 		if (is_array($GLOBALS['TYPO3_CONF_VARS']['EXTCONF'][$obj->extKey]['js_actions'])) {
 			foreach($GLOBALS['TYPO3_CONF_VARS']['EXTCONF'][$obj->extKey]['js_actions'] as $userFunc) {
-				//t3lib_div::debug($userFunc);
+				
 				$params = array(
 					'trueAction'=>&$trueAction,
 					'falseAction'=>&$falseAction,
@@ -130,10 +131,8 @@ class registration_view {
 		foreach($allFields as $field) {
 			$temp="";
 			$onBlur="";
-			
 			if (!$field->value) {
-				
-				$field->value=$obj->getValueFromDB($field);
+				$field->value=$obj->getValueFromSession($field);
 			}
 			if ($field->onBlurValidation) $onBlur=" onblur='test".$field->tempID."(this.value)' ";
 			switch ($field->type) {
@@ -145,7 +144,6 @@ class registration_view {
 						$sql="SELECT content FROM tx_feregistrationprocess_user_info WHERE id='".$this->uid."' AND type='".$field->dbName."'";
 						if ($res=$GLOBALS['TYPO3_DB']->sql_query($sql)) {
 							$row = $GLOBALS['TYPO3_DB']->sql_fetch_assoc($res);
-							//$field->value=$row["content"];
 						}
 					}
 					$temp='<input type="text" name="'.$field->htmlID.'" value="'.$field->value.'" '.$onBlur.'  id="'.$field->htmlID.'" title="'.$field->tooltip.'" />';
@@ -167,7 +165,6 @@ class registration_view {
 						$x='<input type="radio" name="'.$field->htmlID.'" id="'.$field->htmlID.'" value="'.$arr["value"].'"  />'.$this->getString($arr["label"]);
 						$temp.=$obj->cObj->stdWrap($x,$arr);
 					}
-					//t3lib_div::debug($temp);
 					break;
 				case "checkbox":
 					$checked="";
@@ -176,9 +173,7 @@ class registration_view {
 					break;
 				case "password":
 					if ($obj->prefixId!="tx_feregistrationprocess_pi3") $field->value="";
-					//t3lib_div::debug($field);
 					$temp='<input type="password" name="'.$field->htmlID.'" '.$onBlur.' title="'.$field->tooltip.'" value="" id="'.$field->htmlID.'" />';
-					//t3lib_div::debug(array($temp));
 					break;
 				case "hidden":
 					if ($_POST[$field->htmlID]) $field->value=$_POST[$field->htmlID];
@@ -192,22 +187,12 @@ class registration_view {
 			$markerArr["###".$field->markerName."_ERROR###"]="<div id='".$field->errField."'></div>";
 			$htmlFields[$field->markerName]=$temp;
 			if ($field->toDB) {
-				$x=$obj->getValueFromDB($field);
-				
-				if (!$x) {
-					$sql="SELECT content FROM tx_feregistrationprocess_user_info WHERE id='".$obj->uid."' AND type='".$field->dbName."'";
-					//t3lib_div::debug(array("sql",$sql));
-					if ($res=$GLOBALS['TYPO3_DB']->sql_query($sql)) {
-						$row = $GLOBALS['TYPO3_DB']->sql_fetch_assoc($res);
-						$markerArr["###".$field->markerName."_VALUE###"]=$row["content"];
-					}
-				} else {
-					$markerArr["###".$field->markerName."_VALUE###"]=$x;
-				}
+				$value=$obj->getValueFromSession($field);
+				$markerArr["###".$field->markerName."_VALUE###"]=$value;
 			}
 		}
 		$markerArr["###GENERAL_REQUIRED###"]=$obj->requiredMarker;
-		$markerArr["###FORM_BEGIN###"]="<form name='ccm_reg_form' action='".$obj->pi_linkTP_keepPIvars_url()."' method='POST' onSubmit='return ccm_check_FormSubmit();'>";
+		$markerArr["###FORM_BEGIN###"]="<form name='".$obj->prefixId."reg_form' action='".$obj->pi_linkTP_keepPIvars_url()."' method='POST' onSubmit='return ".$obj->prefixId."_check_FormSubmit();'>";
 		$markerArr["###FORM_END###"]='<input type="hidden" name="ccm_regstep" value="'.$obj->currStep.'"></form>';
 		return $markerArr;
 	}

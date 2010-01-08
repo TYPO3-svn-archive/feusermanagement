@@ -3,10 +3,7 @@
 	class registration_model {
 		function getCurrentFields($TSstep,$obj) {
 			$i=0;
-			//$TSstep=$this->conf["steps."][$step."."];
 			$TSfields=$TSstep["fields."];
-			//t3lib_div::debug($this->conf["steps."][$step."."]);
-			//t3lib_div::debug($TSfields);
 			$fields=array();
 			if (!is_array($TSfields)) return $fields;
 			foreach($TSfields as $key=>$TSAttributes) {
@@ -16,7 +13,6 @@
 				$field->name=$name;
 				$field->label=$name;
 				$field->markerName=strtoupper($name);
-				$field->dbName=mysql_real_escape_string($name);
 				$field->tooltip=$name;
 				$field->errField="ccm_reg_err_".$name;
 				$field->htmlID="ccm_reg_elem".$name;
@@ -36,13 +32,13 @@
 				$field->notCheckedMessage=($field->type=="checkbox")?("'".$obj->prepareMessage(array($obj->pi_getLL('email_error','',FALSE),$field->name))):$obj->prepareMessage(array($obj->pi_getLL('not_enter','',FALSE),$field->name));
 				$field->emailErrorMessage=$obj->pi_getLL('email_error','',FALSE);
 				//$field->toDB=getTSValue();
-				if (array_key_exists("dbName",$TSAttributes)) $field->toDB=$TSAttributes["dbName"];
+				
 				if (array_key_exists("required",$TSAttributes)) $field->required=$TSAttributes["required"];
-				if (array_key_exists("toDB",$TSAttributes)) $field->toDB=$TSAttributes["toDB"];
 				if (array_key_exists("requires",$TSAttributes)) $field->requires=$TSAttributes["requires"];
 				
 				if (array_key_exists("additionalData",$TSAttributes)) $field->additionalData=$TSAttributes["additionalData"];
-				if (array_key_exists("onBlurValidation",$TSAttributes)) $field->onBlurValidation=$TSAttributes["onBlurValidation"];
+				if (array_key_exists("validation",$TSAttributes)) $field->validation=$TSAttributes["validation"];
+				if (array_key_exists("jsvalidation",$TSAttributes)) $field->jsvalidation=$TSAttributes["validation"];
 				if (array_key_exists("markerName",$TSAttributes)) $field->markerName=$TSAttributes["markerName"];	
 				if (array_key_exists("notCheckedMessage",$TSAttributes)) $field->notCheckedMessage=$TSAttributes["notCheckedMessage"];	
 				if (array_key_exists("value",$TSAttributes)) $field->value=$TSAttributes["value"];	
@@ -53,7 +49,6 @@
 				$field->TS=$TSAttributes;
 				$field->tempID=$i;
 				$fields[$name]=$field;
-				//t3lib_div::debug($field);
 			}
 			return $fields;
 		}
