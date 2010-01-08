@@ -1,0 +1,75 @@
+plugin.tx_feregistrationprocess_pi1 {
+	config {
+		adminMail=dummy@yourwebsite.com
+		useMD5=0
+		requiredMarker=<sup><span style="color:#ff0000">*</span></sup>
+		
+		usersFreshPid=0
+		usersFreshGroup=0
+		usersConfirmedPid=0
+		usersConfirmedGroup=0
+		usersAdminConfirmedPid=0
+		usersAdminConfirmedGroup=0
+		
+		userConfirmation=1
+		adminConfirmation=0
+		
+		template=typo3conf/ext/fe_registration_process/dummy_template.html
+	}
+	steps {
+		1.fields {
+			nickname {
+				required=1
+				toDB=1
+				type=text
+				label=LL_field_nickname
+				tooltip=LL_field_nickname_tooltip
+				unique=1
+			}
+			password {
+				required=1
+				toDB=1
+				type=password
+				label=LL_field_password
+				tooltip=LL_field_password_tooltip
+			}
+			password2 {
+				required=1
+				toDB=1
+				type=password
+				label=LL_field_password2
+				tooltip=LL_field_password2_tooltip
+				equal=password
+			}
+			email {
+				required=1
+				toDB=1
+				type=text
+				label=LL_field_email
+				tooltip=LL_field_email_tooltip
+			}
+			surname {
+				type=text
+				label=Surname
+				tooltip=Please enter your surname
+			}
+		}
+	}
+	feuser_map {
+	    username=nickname
+	    name=nachname
+	    password=password
+	    email=email
+	    tx_feuseraddfields_vorname=vorname
+	    tx_feuseraddfields_anrede=anrede
+	    tx_feuseraddfields_newsletter=newsletter
+	    tx_personalheader_apo_id=hidden_field_meineapo
+	    tx_personalheader_apo1_label=fav1_bez
+	    tx_personalheader_apo1_plz=fav1_plz
+	    tx_personalheader_apo2_label=fav2_bez
+	    tx_personalheader_apo2_plz=fav2_plz
+	    tx_personalheader_apo3_label=fav3_bez
+	    tx_personalheader_apo3_plz=fav3_plz
+	  }
+
+}
