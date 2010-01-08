@@ -162,7 +162,7 @@ class registration_view {
 				case "radio":
 					$temp="";
 					foreach ($field->list as $arr) {
-						$x='<input type="radio" name="'.$field->htmlID.'" id="'.$field->htmlID.'" value="'.$arr["value"].'"  />'.$this->getString($arr["label"]);
+						$x='<input type="radio" name="'.$field->htmlID.'" id="'.$field->htmlID.'" value="'.$arr["value"].'"  />'.$obj->getString($arr["label"]);
 						$temp.=$obj->cObj->stdWrap($x,$arr);
 					}
 					break;

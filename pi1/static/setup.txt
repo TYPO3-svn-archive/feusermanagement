@@ -61,22 +61,28 @@ plugin.tx_feregistrationprocess_pi1 {
 				tooltip=Please enter your surname
 			}
 		}
+		2.fields {
+			gender {
+				required=1
+				toDB=1
+				type=radio
+				options {
+					1.label=Mr.
+					1.value=male
+					2.label=Mrs.
+					2.value=female
+				}
+				label=Gender
+			}
+		}
 	}
 	feuser_map {
-	    username=nickname
-	    name=nachname
+	    nickname=username
+	    surname=name
 	    password=password
 	    email=email
-	    tx_feuseraddfields_vorname=vorname
-	    tx_feuseraddfields_anrede=anrede
-	    tx_feuseraddfields_newsletter=newsletter
-	    tx_personalheader_apo_id=hidden_field_meineapo
-	    tx_personalheader_apo1_label=fav1_bez
-	    tx_personalheader_apo1_plz=fav1_plz
-	    tx_personalheader_apo2_label=fav2_bez
-	    tx_personalheader_apo2_plz=fav2_plz
-	    tx_personalheader_apo3_label=fav3_bez
-	    tx_personalheader_apo3_plz=fav3_plz
+		gender=title
+	    
 	}
 
 }

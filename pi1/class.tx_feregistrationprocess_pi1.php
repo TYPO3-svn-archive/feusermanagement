@@ -122,7 +122,7 @@ class tx_feregistrationprocess_pi1 extends tslib_pibase {
 			$checkInput&=($_POST['ccm_regstep']==$step);
 			if (($checkInput)&&($this->validateInputLastStep($step))) {
 				
-				$this->writeLastStepToTable($uid,$step);
+				$this->writeLastStepToSession($uid,$step);
 				$GLOBALS["TSFE"]->fe_user->setKey("ses","ccm_reg_step",$step+1);
 			} else {
 				
@@ -285,12 +285,15 @@ class tx_feregistrationprocess_pi1 extends tslib_pibase {
 			
 			if ($field->unique) {
 				$id=$field->htmlID;
+				
 				$value=mysql_real_escape_string($_POST[$id]);
-				$sql="SELECT * FROM tx_feregistrationprocess_user_info WHERE type='".$field->dbName."' AND content='".$value."'";
+				
+				$sql='SELECT * FROM fe_users WHERE '.$field->fe_user.'="'.$value.'"';
+				
 				$res=$GLOBALS['TYPO3_DB']->sql_query($sql);
 				$unique=true;
 				while ($row=$GLOBALS['TYPO3_DB']->sql_fetch_assoc($res)) {
-					if ($row["id"]!=$this->uid) $unique=false;
+					$unique=false;
 				}
 				if (!$unique) {
 					$valid=false;
@@ -355,37 +358,31 @@ class tx_feregistrationprocess_pi1 extends tslib_pibase {
 		return $valid;
 	}
 	
-	function writeLastStepToTable($uid,$step) {
+	function writeLastStepToSession($uid,$step) {
 		$fields=$this->modelLib->getCurrentFields($this->conf['steps.'][$step.'.'],$this);
 		foreach($fields as $field) {
-			if ($field->toDB) {
-				$name=$field->dbName;
-				$id=$field->htmlID;
-				if (isset($_POST[$id])) {
-					$value=$_POST[$id];
-					
-					
-					$sql='DELETE FROM tx_feregistrationprocess_user_info WHERE id="'.mysql_real_escape_string($uid).'" AND type="'.mysql_real_escape_string($name).'"';
-					$GLOBALS['TYPO3_DB']->sql_query($sql);
-					$sql="INSERT INTO tx_feregistrationprocess_user_info (type,content,id,istemp) VALUES('".mysql_real_escape_string($name)."','".mysql_real_escape_string($value)."','".mysql_real_escape_string($uid)."','0')";
-					$GLOBALS['TYPO3_DB']->sql_query($sql);
-					### HOOK afterValueInsert ###
-					if (is_array($GLOBALS['TYPO3_CONF_VARS']['EXTCONF'][$this->extKey]['afterValueInsert'])) {
-						foreach($GLOBALS['TYPO3_CONF_VARS']['EXTCONF'][$this->extKey]['afterValueInsert'] as $userFunc) {
-							$params = array(
-								'uid' => $this->uid,
-								'field' => $field,
-								'value'=>$value,
-								'pi'=> 'tx_feregistrationprocess_pi1'
-							);
-							t3lib_div::callUserFunction($userFunc, $params, $this);
-						}
+			
+			$name=$field->dbName;
+			$id=$field->htmlID;
+			if (isset($_POST[$id])) {
+				$value=$_POST[$id];
+				$GLOBALS["TSFE"]->fe_user->setKey("ses",$this->prefixId.$field->name,$value);
+				### HOOK afterValueInsert ###
+				if (is_array($GLOBALS['TYPO3_CONF_VARS']['EXTCONF'][$this->extKey]['afterValueInsert'])) {
+					foreach($GLOBALS['TYPO3_CONF_VARS']['EXTCONF'][$this->extKey]['afterValueInsert'] as $userFunc) {
+						$params = array(
+							'field' => $field,
+							'value'=>$value,
+							'pi'=> 'tx_feregistrationprocess_pi1'
+						);
+						t3lib_div::callUserFunction($userFunc, $params, $this);
 					}
 				}
 			}
+		
 		}
 	}
-	function getValueFromSession($field,$uid="") {
+	function getValueFromSession($field) {
 		$sesVal=$GLOBALS["TSFE"]->fe_user->getKey("ses",$this->prefixId.$field->name);
 		if ($sesVal) return $sesVal;
 		if ($field->value) return $field->value; //Wert der übers Typoscript übergeben wurde, für z.B. Hidden-Fields
@@ -396,13 +393,14 @@ class tx_feregistrationprocess_pi1 extends tslib_pibase {
 		
 		$allFields=$this->modelLib->getAllFields($this);
 		$map=array();
-		if (is_array($this->conf["feuser_map."])) {
-			foreach($this->conf["feuser_map."] as $key=>$value) {
-				$map[$key]=$this->getValueFromSession($allFields[$value]);
-				if ($key=='password') $map[$key]=encryptPW($map[$key],$this);
+		
+		foreach($allFields as $field) {
+			if ($field->fe_user) {
+				$map[$field->fe_user]=$this->getValueFromSession($field);
 			}
 		}
-		
+		$token=md5(rand());
+		$map['registration_token']=$token;
 		$keys=implode(",",array_keys($map));
 		if (strlen($keys)>0) $keys=",".$keys;
 		$values=implode("','",$map);
@@ -411,8 +409,10 @@ class tx_feregistrationprocess_pi1 extends tslib_pibase {
 		
 		$pid=$this->conf["config."]["usersFreshPid"];
 		$group=$this->conf["config."]["usersFreshGroup"];
-		if ((!isset($pid))) {//||(!isset($usernameField))||(!isset($passwordField))) {
+		if ((!isset($pid))) {
+			
 			$this->adminError=$this->pi_getLL('admin_error','',FALSE);
+			
 			return false;
 		}
 		$disabled=0;
@@ -422,19 +422,12 @@ class tx_feregistrationprocess_pi1 extends tslib_pibase {
 		$zeit=time();
 		
 		$sql="INSERT INTO fe_users (pid,usergroup,disable,tstamp,crdate".$keys.") VALUES('$pid','$group','$disabled','$zeit','$zeit'".$values.")";
-		
+		t3lib_div::debug(array($sql));
 		$GLOBALS['TYPO3_DB']->sql_query($sql);
 		$id=$GLOBALS['TYPO3_DB']->sql_insert_id ();
 
-		$token=md5(rand());
-		$sql="INSERT INTO tx_feregistrationprocess_user_info (id,type,content) VALUES('".$this->uid."','userconfirm_token','$token')";
-		$GLOBALS['TYPO3_DB']->sql_query($sql);
-		$token=md5(rand());
-		$sql="INSERT INTO tx_feregistrationprocess_user_info (id,type,content) VALUES('".$this->uid."','adminconfirm_token','$token')";
-		$GLOBALS['TYPO3_DB']->sql_query($sql);
 		
-		$sql="UPDATE tx_feregistrationprocess_user_info SET feuser_uid='$id' WHERE id='".$this->uid."'";
-		$GLOBALS['TYPO3_DB']->sql_query($sql);		
+			
 		$this->generateUserMailConfirmation($id);
 
 	}

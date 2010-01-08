@@ -1,5 +1,6 @@
 <?php
 	
+				
 	class registration_model {
 		function getCurrentFields($TSstep,$obj) {
 			$i=0;
@@ -18,8 +19,7 @@
 				$field->htmlID="ccm_reg_elem".$name;
 				if (array_key_exists("type",$TSAttributes)) $field->type=$TSAttributes["type"];
 				if ($field->type=="dropdown"||$field->type=="radio") {
-					if (array_key_exists("options.",$TSAttributes)&&is_array($TSAttributes["options."]))
-						$TSOptions=$TSAttributes["options."];
+					if (array_key_exists("options.",$TSAttributes)&&is_array($TSAttributes["options."])) $TSOptions=$TSAttributes["options."];
 					foreach($TSOptions as $key=>$TSoption) {
 						
 						if (is_array($TSoption)) {
@@ -48,8 +48,12 @@
 				if (array_key_exists("equal",$TSAttributes)) $field->equal=$TSAttributes["equal"];	
 				$field->TS=$TSAttributes;
 				$field->tempID=$i;
+				$field->fe_user=(string)getTSValue('feuser_map.'.$field->name,$obj->conf);
 				$fields[$name]=$field;
+				
+				
 			}
+			
 			return $fields;
 		}
 		function getAllFields($obj) {
