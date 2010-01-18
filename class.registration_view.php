@@ -146,13 +146,13 @@ class registration_view {
 							$row = $GLOBALS['TYPO3_DB']->sql_fetch_assoc($res);
 						}
 					}
-					$temp='<input type="text" name="'.$field->htmlID.'" value="'.$field->value.'" '.$onBlur.'  id="'.$field->htmlID.'" title="'.$field->tooltip.'" />';
+					$temp='<input type="text" name="'.$obj->prefixId.'['.$field->htmlID.']" value="'.$field->value.'" '.$onBlur.'  id="'.$field->htmlID.'" title="'.$field->tooltip.'" />';
 					break;
 				case "textarea":
-					$temp='<textarea name="'.$field->htmlID.'" id="'.$field->htmlID.'" title="'.$field->tooltip.'" >'.$field->value.'</textarea>';
+					$temp='<textarea name="'.$obj->prefixId.'['.$field->htmlID.']" id="'.$field->htmlID.'" title="'.$field->tooltip.'" >'.$field->value.'</textarea>';
 					break;
 				case "dropdown":
-					$temp='<select name="'.$field->htmlID.'" id="'.$field->htmlID.'" title="'.$field->tooltip.'">';
+					$temp='<select name="'.$obj->prefixId.'['.$field->htmlID.']" id="'.$field->htmlID.'" title="'.$field->tooltip.'">';
 					foreach ($field->list as $arr) {
 						$x='<option value="'.$arr["value"].'">'.$obj->getString($arr["label"]).'</option>';
 						$temp.=$obj->cObj->stdWrap($x,$arr);
@@ -162,22 +162,22 @@ class registration_view {
 				case "radio":
 					$temp="";
 					foreach ($field->list as $arr) {
-						$x='<input type="radio" name="'.$field->htmlID.'" id="'.$field->htmlID.'" value="'.$arr["value"].'"  />'.$obj->getString($arr["label"]);
+						$x='<input type="radio" name="'.$obj->prefixId.'['.$field->htmlID.']" id="'.$field->htmlID.'" value="'.$arr["value"].'"  />'.$obj->getString($arr["label"]);
 						$temp.=$obj->cObj->stdWrap($x,$arr);
 					}
 					break;
 				case "checkbox":
 					$checked="";
 					if ($_POST[$field->htmlID]||($obj->getValueFromDB($field))) $checked="checked";
-					$temp='<input type="checkbox" name="'.$field->htmlID.'" id="'.$field->htmlID.'" value="1" "'.(($field->value)?'checked':'').'" title="'.$field->tooltip.'" '.$checked.' />';
+					$temp='<input type="checkbox" name="'.$obj->prefixId.'['.$field->htmlID.']" id="'.$field->htmlID.'" value="1" "'.(($field->value)?'checked':'').'" title="'.$field->tooltip.'" '.$checked.' />';
 					break;
 				case "password":
 					if ($obj->prefixId!="tx_feregistrationprocess_pi3") $field->value="";
-					$temp='<input type="password" name="'.$field->htmlID.'" '.$onBlur.' title="'.$field->tooltip.'" value="" id="'.$field->htmlID.'" />';
+					$temp='<input type="password" name="'.$obj->prefixId.'['.$field->htmlID.']" '.$onBlur.' title="'.$field->tooltip.'" value="" id="'.$field->htmlID.'" />';
 					break;
 				case "hidden":
 					if ($_POST[$field->htmlID]) $field->value=$_POST[$field->htmlID];
-					$temp='<input type="hidden"  name="'.$field->htmlID.'" value="'.$field->value.'" />';
+					$temp='<input type="hidden"  name="'.$obj->prefixId.'['.$field->htmlID.']" value="'.$field->value.'" />';
 					break;
 			}
 			$temp=$obj->cObj->stdWrap($temp,$field->TS);
@@ -192,8 +192,8 @@ class registration_view {
 			}
 		}
 		$markerArr["###GENERAL_REQUIRED###"]=$obj->requiredMarker;
-		$markerArr["###FORM_BEGIN###"]="<form name='".$obj->prefixId."reg_form' action='".$obj->pi_linkTP_keepPIvars_url()."' method='POST' onSubmit='return ".$obj->prefixId."_check_FormSubmit();'>";
-		$markerArr["###FORM_END###"]='<input type="hidden" name="ccm_regstep" value="'.$obj->currStep.'"></form>';
+		$markerArr["###FORM_BEGIN###"]="<form name='".$obj->prefixId."reg_form' action='".$obj->baseURL.$obj->cObj->getTypoLink_URL($GLOBALS['TSFE']->id)."' method='POST' onSubmit='return ".$obj->prefixId."_check_FormSubmit();'>";
+		$markerArr["###FORM_END###"]='<input type="hidden" name="'.$obj->prefixId.'[ccm_regstep]" value="'.$obj->currStep.'"></form>';
 		return $markerArr;
 	}
 }

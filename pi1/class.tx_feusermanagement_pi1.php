@@ -61,7 +61,9 @@ class tx_feusermanagement_pi1 extends tslib_pibase {
 		$this->pi_setPiVarDefaults();
 		$this->pi_loadLL();
 		$this->pi_USER_INT_obj=1;	// Configuring so caching is not expected. This value means that no cHash params are ever set. We do this, because it's a USER_INT object!
-				
+		
+		#t3lib_div::debug($this->piVars);
+		
 		$this->baseURL=getTSValue('config.baseURL',$GLOBALS['TSFE']->tmpl->setup);
 		if (!$this->baseURL) return 'config.baseURL not set';
 		
@@ -91,8 +93,8 @@ class tx_feusermanagement_pi1 extends tslib_pibase {
 		
 		
 		### SPRUNG AUF VORGÄNGERSEITE? ###
-		if ($_GET["backlinkToStep"]&&$GLOBALS["TSFE"]->fe_user->getKey("ses","ccm_reg_step")) { ###SESSION EXISTIERT, UND ER WILL ZURÜCK ###
-			$back=$_GET["backlinkToStep"];
+		if ($this->piVars['backlinkToStep']&&$GLOBALS["TSFE"]->fe_user->getKey("ses","ccm_reg_step")) { ###SESSION EXISTIERT, UND ER WILL ZURÜCK ###
+			$back=$this->piVars["backlinkToStep"];
 			$step=$GLOBALS["TSFE"]->fe_user->getKey("ses","ccm_reg_step");
 			$back=(int)$back;
 			if (($back>0) && ($back<$step)) {
@@ -100,14 +102,14 @@ class tx_feusermanagement_pi1 extends tslib_pibase {
 				$checkInput=false;
 			}
 		}
-		if ($_GET["userConfirmationToken"]) {
+		if ($this->piVars["userConfirmationToken"]) {
 			
-			$content=$this->renderMailConfirmation($_GET["userConfirmationToken"]);
+			$content=$this->renderMailConfirmation($this->piVars["userConfirmationToken"]);
 			return $this->pi_wrapInBaseClass($content);
 		}
-		if ($_GET["adminAction"]) {
+		if ($this->piVars["adminAction"]) {
 			
-			$content=$this->renderAdminConfirmation($_GET["adminAction"],$_GET["token"]);
+			$content=$this->renderAdminConfirmation($this->piVars["adminAction"],$this->piVars["token"]);
 			return $this->pi_wrapInBaseClass($content);
 		}
 		if (!$GLOBALS["TSFE"]->fe_user->getKey("ses","ccm_reg_step")) { ### new registration ###
@@ -118,7 +120,7 @@ class tx_feusermanagement_pi1 extends tslib_pibase {
 			### CHECK RECIEVED DATA ###
 			$step=$GLOBALS["TSFE"]->fe_user->getKey("ses","ccm_reg_step");
 			
-			$checkInput&=($_POST['ccm_regstep']==$step);
+			$checkInput&=($this->piVars['ccm_regstep']==$step);
 			if (($checkInput)&&($this->validateInputLastStep($step))) {
 				
 				$this->writeLastStepToSession($uid,$step);
@@ -276,7 +278,7 @@ class tx_feusermanagement_pi1 extends tslib_pibase {
 			if ($field->required) {
 				$name=$field->name;
 				$id=$field->htmlID;
-				if (!(isset($_POST[$id]) && ($_POST[$id]))) {	
+				if (!(isset($this->piVars[$id]) && ($this->piVars[$id]))) {	
 					$valid=$GLOBALS["TSFE"]->fe_user->getKey("ses",$this->prefixId.$field->htmlId);
 				}
 				
@@ -285,7 +287,7 @@ class tx_feusermanagement_pi1 extends tslib_pibase {
 			if ($field->unique) {
 				$id=$field->htmlID;
 				
-				$value=mysql_real_escape_string($_POST[$id]);
+				$value=mysql_real_escape_string($this->piVars[$id]);
 				
 				$sql='SELECT * FROM fe_users WHERE '.$field->fe_user.'="'.$value.'"';
 				
@@ -303,7 +305,7 @@ class tx_feusermanagement_pi1 extends tslib_pibase {
 				$ref=$field->equal;
 				$id=$field->htmlID;
 				$id2=$fields[$ref]->htmlID;
-				if ($_POST[$id]!=$_POST[$id2]) {
+				if ($this->piVars[$id]!=$this->piVars[$id2]) {
 					$valid=false;
 					$this->errMsg=$this->prepareMessage(array($this->pi_getLL('equal_error','',FALSE),$field->name,$fields[$ref]->name));
 				}
@@ -316,7 +318,7 @@ class tx_feusermanagement_pi1 extends tslib_pibase {
 						
 						//$pattern="^[\\\\w-_\\.+]*[\\\\w-_\\.]\@([\\\\w]+\\\\.)+[\\\\w]+[\\\\w]$";
 						
-						if (!eregi($pattern,$_POST[$field->htmlID])) {
+						if (!eregi($pattern,$this->piVars[$field->htmlID])) {
 							
 							$valid=false;
 							$this->errMsg=$this->pi_getLL('email_error','',FALSE);
@@ -325,7 +327,7 @@ class tx_feusermanagement_pi1 extends tslib_pibase {
 					case "//password":
 						$pattern="/^.*(?=.{6,})(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).*$/";
 												
-						if (!preg_match($pattern,$_POST[$field->htmlID])) {
+						if (!preg_match($pattern,$this->piVars[$field->htmlID])) {
 							$valid=false;
 							$this->errMsg=$this->pi_getLL('password_error','',FALSE);
 						}
@@ -333,7 +335,7 @@ class tx_feusermanagement_pi1 extends tslib_pibase {
 					case "regExp":
 						
 						$pattern = "";
-						if (!eregi($pattern,$_POST[$field->htmlID])) {
+						if (!eregi($pattern,$this->piVars[$field->htmlID])) {
 							$valid=false;
 							$this->errMsg=$this->prepareMessage(array(pi_getLL('pattern_error','',FALSE),$field->label));
 						}
@@ -363,8 +365,8 @@ class tx_feusermanagement_pi1 extends tslib_pibase {
 			
 			$name=$field->dbName;
 			$id=$field->htmlID;
-			if (isset($_POST[$id])) {
-				$value=$_POST[$id];
+			if (isset($this->piVars[$id])) {
+				$value=$this->piVars[$id];
 				$GLOBALS["TSFE"]->fe_user->setKey("ses",$this->prefixId.$field->name,$value);
 				### HOOK afterValueInsert ###
 				if (is_array($GLOBALS['TYPO3_CONF_VARS']['EXTCONF'][$this->extKey]['afterValueInsert'])) {
@@ -435,7 +437,7 @@ class tx_feusermanagement_pi1 extends tslib_pibase {
 		$sql='SELECT * FROM fe_users WHERE uid='.$id;
 		$res=$GLOBALS['TYPO3_DB']->sql_query($sql);
 		$user = $GLOBALS['TYPO3_DB']->sql_fetch_assoc($res);
-		$confirmLink=$this->baseURL.$this->cObj->getTypoLink_URL($GLOBALS['TSFE']->id,array('userConfirmationToken'=>$user['registration_token'],'fe_user'=>$id));
+		$confirmLink=$this->baseURL.$this->cObj->getTypoLink_URL($GLOBALS['TSFE']->id,array($this->prefixId.'[userConfirmationToken]'=>$user['registration_token'],$this->prefixId.'[fe_user]'=>$id));
 		$markerArr=array();
 		$markerArr['###CONFIRMATION_LINK###']=$confirmLink;
 		foreach($user as $key=>$value) {
@@ -462,10 +464,10 @@ class tx_feusermanagement_pi1 extends tslib_pibase {
 			$markerArr['###FE_'.strtoupper($key).'###']=$value;
 		}
 		$adminToken=$row_feuser['registration_token'];#md5($TYPO3_CONF_VARS['SYS']['encryptionKey'].$row['registration_token']);
-		#t3lib_div::debug($adminToken);
-		
-		$confirmLink=$this->baseURL.'index.php?id='.$GLOBALS['TSFE']->id.'&adminAction=confirm&token='.md5($adminToken).'&fe_user='.$row_feuser['uid'];
-		$declineLink=$this->baseURL.'index.php?id='.$GLOBALS['TSFE']->id.'&adminAction=decline&token='.md5($adminToken).'&fe_user='.$row_feuser['uid'];
+		#$confirmLink=$this->baseURL.'index.php?id='.$GLOBALS['TSFE']->id.'&adminAction=confirm&token='.md5($adminToken).'&fe_user='.$row_feuser['uid'];
+		$confirmLink=$this->pi_getPageLink($GLOBALS['TSFE']->id,$target='',$urlParameters=array($this->prefixId.'[adminAction]'=>'confirm',$this->prefixId.'[token]'=>md5($adminToken),$this->prefixId.'[fe_user]'=>$row_feuser['uid']));
+		#$declineLink=$this->baseURL.'index.php?id='.$GLOBALS['TSFE']->id.'&adminAction=decline&token='.md5($adminToken).'&fe_user='.$row_feuser['uid'];
+		$declineLink=$this->pi_getPageLink($GLOBALS['TSFE']->id,$target='',$urlParameters=array($this->prefixId.'[adminAction]'=>'decline',$this->prefixId.'[token]'=>md5($adminToken),$this->prefixId.'[fe_user]'=>$row_feuser['uid']));
 		$markerArr["###ADMIN_ACCEPT###"]=$confirmLink;
 		$markerArr["###ADMIN_DECLINE###"]=$declineLink;
 		$disabled=0;
@@ -502,6 +504,26 @@ class tx_feusermanagement_pi1 extends tslib_pibase {
 	}
 	function getBacklinks($step) {
 		$steps=array();
+		
+		$allSteps=getTSValue('steps',$this->conf);
+		foreach ($allSteps as $key=>$value) {
+			
+			if(preg_match('/\A[0-9]+\.\z/',$key)) {
+				$label=getTSValue('steps.'.$key.'label',$this->conf);
+				$step=str_replace('.','',$key);
+				if ($this->currStep>$step) {
+					$html='<a href="'.$this->cObj->getTypoLink_URL($GLOBALS['TSFE']->id,array($this->prefixId.'[backlinkToStep]'=>$step)).'" class="oldstep">'.$label.'</a>';
+				}
+				if ($this->currStep==$step) {
+					$html='<span class="currstep">'.$label.'</span>';
+				}
+				if ($this->currStep<$step) {
+					$html='<span class="furturestep">'.$label.'</span>';
+				}
+				$steps[$key]=$html;
+			}
+		}
+		return $steps;
 		$inactiveTS=getTSValue('config.progressList.inactive.',$this->conf);
 		$activeTS=getTSValue('config.progressList.active.',$this->conf);
 		$currentTS=getTSValue('config.progressList.current.',$this->conf);
@@ -578,8 +600,8 @@ class tx_feusermanagement_pi1 extends tslib_pibase {
 	
 	function renderMailConfirmation($token) {
 		$token=mysql_real_escape_string($token);
-		$feuser_uid=(int)$_GET['fe_user'];
-		$sql='SELECT * FROM fe_users WHERE uid='.$_GET['fe_user'].' AND registration_token="'.$token.'"';
+		$feuser_uid=(int)$this->piVars['fe_user'];
+		$sql='SELECT * FROM fe_users WHERE uid='.$feuser_uid.' AND registration_token="'.$token.'"';
 		
 		$res=$GLOBALS['TYPO3_DB']->sql_query($sql);
 		if ($row = $GLOBALS['TYPO3_DB']->sql_fetch_assoc($res)) {
@@ -602,7 +624,7 @@ class tx_feusermanagement_pi1 extends tslib_pibase {
 		return $content;
 	}
 	function renderAdminConfirmation($action,$token) {
-		$user=(int)$_GET['fe_user'];
+		$user=(int)$this->piVars['fe_user'];
 		$sql='SELECT * FROM fe_users WHERE uid='.$user;
 		
 		
@@ -623,7 +645,7 @@ class tx_feusermanagement_pi1 extends tslib_pibase {
 				$content="User Deleted";
 			}
 		} else {
-			#t3lib_div::debug(array($row['registration_token'],$token));
+			
 			$content='ungültiger Token';
 		}
 		return $content;

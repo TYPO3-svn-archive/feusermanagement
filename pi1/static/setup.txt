@@ -20,7 +20,11 @@ plugin.tx_feusermanagement_pi1 {
 		
 		template=typo3conf/ext/feusermanagement/dummy_template.html
 	}
+	stepjumps {
+		2=1
+	}
 	steps {
+		1.label=Step1
 		1.fields {
 			nickname {
 				required=1
@@ -61,6 +65,7 @@ plugin.tx_feusermanagement_pi1 {
 				tooltip=Please enter your surname
 			}
 		}
+		2.label=Step2
 		2.fields {
 			gender {
 				required=1
@@ -82,7 +87,6 @@ plugin.tx_feusermanagement_pi1 {
 	    password=password
 	    email=email
 		gender=title
-	    
 	}
 
 }
