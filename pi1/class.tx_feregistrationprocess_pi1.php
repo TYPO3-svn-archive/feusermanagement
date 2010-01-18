@@ -407,8 +407,8 @@ class tx_feregistrationprocess_pi1 extends tslib_pibase {
 		if (strlen($values)>0) $values=",'".$values."'";
 
 		
-		$pid=$this->conf["config."]["usersFreshPid"];
-		$group=$this->conf["config."]["usersFreshGroup"];
+		$pid=getTSValue('config.usersFreshPid',$this->conf);
+		$group=getTSValue('config.usersFreshGroup',$this->conf);
 		if ((!isset($pid))) {
 			
 			$this->adminError=$this->pi_getLL('admin_error','',FALSE);
@@ -422,40 +422,34 @@ class tx_feregistrationprocess_pi1 extends tslib_pibase {
 		$zeit=time();
 		
 		$sql="INSERT INTO fe_users (pid,usergroup,disable,tstamp,crdate".$keys.") VALUES('$pid','$group','$disabled','$zeit','$zeit'".$values.")";
-		t3lib_div::debug(array($sql));
+		
 		$GLOBALS['TYPO3_DB']->sql_query($sql);
 		$id=$GLOBALS['TYPO3_DB']->sql_insert_id ();
 
-		
-			
-		$this->generateUserMailConfirmation($id);
+		if (getTSValue('config.userConfirmation',$this->conf)) $this->generateUserMailConfirmation($id);
 
 	}
 	
 
 	function generateUserMailConfirmation($id) {
 		$html=$this->userMailTemplate;
-		
-		$sql="SELECT content FROM tx_feregistrationprocess_user_info WHERE feuser_uid='$id' AND type='userconfirm_token'";
+		$sql='SELECT * FROM fe_users WHERE uid='.$id;
 		$res=$GLOBALS['TYPO3_DB']->sql_query($sql);
-		$row = $GLOBALS['TYPO3_DB']->sql_fetch_assoc($res);
-		$token=$row["content"];
-		
-		$sql="SELECT * FROM fe_users WHERE uid='$id'";
-		$res=$GLOBALS['TYPO3_DB']->sql_query($sql);
-		$row = $GLOBALS['TYPO3_DB']->sql_fetch_assoc($res);
-		
+		$user = $GLOBALS['TYPO3_DB']->sql_fetch_assoc($res);
 		$confirmLink=getTSValue('config.baseURL',$this->conf).$this->cObj->getTypoLink_URL($GLOBALS['TSFE']->id,array('userConfirmationToken'=>$token,'fe_user'=>$id));
-		
-		$html=str_replace("###CONFIRMATION_LINK###",$confirmLink,$html);
+		$markerArr=array();
+		$markerArr['###CONFIRMATION_LINK###']=$confirmLink;
+		foreach($user as $key=>$value) {
+			$markerArr['###FE_'.strtoupper($key).'###']=$value;
+		}
+		$html=str_replace(array_keys($markerArr),$markerArr,$html);
 		
 		$mailObj = t3lib_div::makeInstance('t3lib_htmlmail');
 		$mailObj->start();
-		$mailObj->recipient = $row["email"];
-	   
-		$mailObj->subject = 'Ihre Registrierung auf apotheken.de';
-		$mailObj->from_email = 'noreply@apotheken.de';
-		$mailObj->from_name = 'apotheken.de';
+		$mailObj->recipient = $user["email"];
+		$mailObj->subject = getTSValue('config.userMailSubject',$this->conf);
+		$mailObj->from_email = getTSValue('config.mailFromEMail',$this->conf);
+		$mailObj->from_name = getTSValue('config.mailFromName',$this->conf);
 		$mailObj->addPlain($html);
 		$mailObj->setHTML($mailObj->encodeMsg($html));
 		$success=$mailObj->send($row["email"]);
