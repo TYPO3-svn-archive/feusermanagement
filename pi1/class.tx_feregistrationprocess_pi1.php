@@ -75,7 +75,6 @@ class tx_feregistrationprocess_pi1 extends tslib_pibase {
 		if ($this->conf["config."]["userConfirmation"]) $this->requireUserConfirm=1;
 		if ($this->conf["config."]["adminConfirmation"]) $this->requireAdminConfirm=1;
 		
-
 		$checkInput=true;
 		
 		### Template ###
@@ -436,7 +435,7 @@ class tx_feregistrationprocess_pi1 extends tslib_pibase {
 		$sql='SELECT * FROM fe_users WHERE uid='.$id;
 		$res=$GLOBALS['TYPO3_DB']->sql_query($sql);
 		$user = $GLOBALS['TYPO3_DB']->sql_fetch_assoc($res);
-		$confirmLink=getTSValue('config.baseURL',$this->conf).$this->cObj->getTypoLink_URL($GLOBALS['TSFE']->id,array('userConfirmationToken'=>$token,'fe_user'=>$id));
+		$confirmLink=$this->baseURL.$this->cObj->getTypoLink_URL($GLOBALS['TSFE']->id,array('userConfirmationToken'=>$user['registration_token'],'fe_user'=>$id));
 		$markerArr=array();
 		$markerArr['###CONFIRMATION_LINK###']=$confirmLink;
 		foreach($user as $key=>$value) {
@@ -456,28 +455,25 @@ class tx_feregistrationprocess_pi1 extends tslib_pibase {
 		
 		return $success;
 	}
-	function generateAdminMailUserConfirmation($fe_id,$id) {
+	function generateAdminMailUserConfirmation($row_feuser) {
 		
-		$html=$this->adminMailTemplate;
-		
-		$sql="SELECT content FROM tx_feregistrationprocess_user_info WHERE feuser_uid='$fe_id' AND type='adminconfirm_token'";
-		$res=$GLOBALS['TYPO3_DB']->sql_query($sql);
-		$row = $GLOBALS['TYPO3_DB']->sql_fetch_assoc($res);
-		$token=$row["content"];
-		
-		$allFields=$this->modelLib->getAllFields($this);
-		$arr=array();
-		foreach($allFields as $field) {
-			if ($field->toDB) {
-				$arr["###".$field->name."_VALUE###"]=$this->getValueFromDB($field,$id);
-			}
+		$markerArr=array();
+		foreach ($row_feuser as $key=>$value) {
+			$markerArr['###FE_'.strtoupper($key).'###']=$value;
 		}
+		$adminToken=$row_feuser['registration_token'];#md5($TYPO3_CONF_VARS['SYS']['encryptionKey'].$row['registration_token']);
+		#t3lib_div::debug($adminToken);
+		$confirmLink=$this->baseURL.'index.php?id='.$GLOBALS['TSFE']->id.'&adminAction=confirm&token='.md5($adminToken).'&fe_user='.$row_feuser['uid'];
+		$declineLink=$this->baseURL.'index.php?id='.$GLOBALS['TSFE']->id.'&adminAction=decline&token='.md5($adminToken).'&fe_user='.$row_feuser['uid'];
+		$markerArr["###ADMIN_ACCEPT###"]=$confirmLink;
+		$markerArr["###ADMIN_DECLINE###"]=$declineLink;
+		$disabled=0;
+		if ($this->requireAdminConfirm) $disabled=1;
+
+		$mailTemplate=$this->cObj->getSubpart($this->templatefile,'ADMIN_MAIL_USER_CONFIRMATION');
 		
-		$confirmLink=$this->baseURL.'index.php?id='.$GLOBALS['TSFE']->id.'&adminAction=confirm&token='.$token.'&fe_user='.$fe_id;
-		$declineLink=$this->baseURL.'index.php?id='.$GLOBALS['TSFE']->id.'&adminAction=decline&token='.$token.'&fe_user='.$fe_id;
-		$arr["###ADMIN_ACCEPT###"]=$confirmLink;
-		$arr["###ADMIN_DECLINE###"]=$declineLink;
-		$html=str_replace(array_keys($arr),$arr,$html);
+		$mailCont=str_replace(array_keys($markerArr),$markerArr,$mailTemplate);
+		$adminAddr=getTSValue('config.adminMail',$this->conf);
 		
 		$adminAddr=getTSValue('config.adminMail',$this->conf);
 		$adminSubject=getTSValue('config.adminMailSubject',$this->conf);
@@ -489,9 +485,9 @@ class tx_feregistrationprocess_pi1 extends tslib_pibase {
 		$mailObj->subject = $adminSubject;
 		$mailObj->from_email = $fromMail;
 		$mailObj->from_name = $fromName;
-		$mailObj->addPlain($html);
-		$mailObj->setHTML($mailObj->encodeMsg($html));
-		$success=$mailObj->send($adminAddr);
+		$mailObj->addPlain($mailCont);
+		$mailObj->setHTML($mailObj->encodeMsg($mailCont));
+		$success=$mailObj->send($adminAddr);		
 		
 	}
 	function prepareMessage($arr) {
@@ -581,95 +577,55 @@ class tx_feregistrationprocess_pi1 extends tslib_pibase {
 	
 	function renderMailConfirmation($token) {
 		$token=mysql_real_escape_string($token);
-		$sql="SELECT id,feuser_uid FROM tx_feregistrationprocess_user_info WHERE content='$token' AND type='userconfirm_token'";
+		$feuser_uid=(int)$_GET['fe_user'];
+		$sql='SELECT * FROM fe_users WHERE uid='.$_GET['fe_user'].' AND registration_token="'.$token.'"';
 		
 		$res=$GLOBALS['TYPO3_DB']->sql_query($sql);
 		if ($row = $GLOBALS['TYPO3_DB']->sql_fetch_assoc($res)) {
-			$id=$row["id"];
-			$feuser_uid=$row["feuser_uid"];
-			/*
-			$arr=array();
-			$fields=$this->modelLib->getAllFields($this);
-			foreach($fields as $field){
-				$arr["###".$field->name."_VALUE###"]=$this->getValueFromDB($field,$id);
-			}
-			
-			$newToken=md5(rand());
-			
-			
-			$arr["###ADMIN_ACCEPT###"]="http://no1.k1on.de/cms/index.php?id=38&admin_accept=$newToken";
-			$arr["###ADMIN_DECLINE###"]="http://no1.k1on.de/cms/index.php?id=38&admin_decline=$newToken";
-			$sql="INSERT INTO tx_feregistrationprocess_user_info (id,feuser_uid,type,content) VALUES('$id','$feuser_uid','admin_token','$newToken')";
-			//t3lib_div::debug($sql);
-			$GLOBALS['TYPO3_DB']->sql_query($sql);
-			
-			*/
 			$pid=getTSValue('config.usersConfirmedPid',$this->conf);
 			$group=getTSValue('config.usersConfirmedGroup',$this->conf);
-			
-			$disabled=0;
-			if ($this->requireAdminConfirm) $disabled=1;
-			$sql="UPDATE fe_users SET pid='$pid',usergroup='$group',disable='$disabled' WHERE uid='$feuser_uid'";
-			
+			$token=md5(rand());
+			$sql="UPDATE fe_users SET pid='$pid',usergroup='$group',disable='$disabled',registration_token='".$token."' WHERE uid=".$feuser_uid;
 			$GLOBALS['TYPO3_DB']->sql_query($sql);
-			$content="Noch hardgecodeter krempel";
-			//t3lib_div::debug(array("y"=>$this->templatefile));
-			//$mailTemplate=$this->cObj->getSubpart($this->templatefile,"ADMIN_MAIL_USER_CONFIRMATION");
-			/*
-			$mailCont=str_replace(array_keys($arr),$arr,$mailTemplate);
-			$adminAddr=$this->conf["config."]["adminMail"];
-			
-			$mailObj = t3lib_div::makeInstance('t3lib_htmlmail');
-			$mailObj->start();
-			$mailObj->recipient = $adminAddr;
-			$mailObj->subject = 'Neue Registrierung';
-			$mailObj->from_email = 'noreply@apotheken.de';
-			$mailObj->from_name = 'No Reply';
-			$mailObj->addPlain(strip_tags($mailCont));
-			$mailObj->setHTML($mailObj->encodeMsg($mailCont));
-			$success=$mailObj->send($adminAddr);
-			*/
-			if ($this->requireAdminConfirm) $this->generateAdminMailUserConfirmation($feuser_uid,$id);
-			
+			$row['registration_token']=$token;
+			$content=$this->cObj->getSubpart($this->templatefile,'AFTER_USER_MAIL_CONFIRMATION_HTML');
+			foreach ($row as $key=>$value) {
+				$markerArr['###FE_'.strtoupper($key).'###']=$value;
+			}
+			$content=str_replace(array_keys($markerArr),$markerArr,$content);
+			if ($this->requireAdminConfirm) $this->generateAdminMailUserConfirmation($row);
+
 		} else {
 			$content="ungültiger Token";
 		}
 		return $content;
 	}
 	function renderAdminConfirmation($action,$token) {
-		if ($action=="confirm") {
-			$token=mysql_real_escape_string($token);
-			$sql="SELECT id,feuser_uid FROM tx_feregistrationprocess_user_info WHERE content='$token' AND type='adminconfirm_token'";
-			$res=$GLOBALS['TYPO3_DB']->sql_query($sql);
-			if ($row = $GLOBALS['TYPO3_DB']->sql_fetch_assoc($res)) {
-				$id=$row["id"];
-				$feuser_uid=$row["feuser_uid"];
+		$user=(int)$_GET['fe_user'];
+		$sql='SELECT * FROM fe_users WHERE uid='.$user;
+		
+		
+		$res=$GLOBALS['TYPO3_DB']->sql_query($sql);
+		if (($row = $GLOBALS['TYPO3_DB']->sql_fetch_assoc($res)) && ($row['registration_token']==$token)) {
+			if ($action=='confirm') {
 				$pid=$this->conf["config."]["usersAdminConfirmedPid"];
 				$group=$this->conf["config."]["usersAdminConfirmedGroup"];
-				$sql="UPDATE fe_users SET disable='0',usergroup='$group',pid='$pid' WHERE uid='$feuser_uid'";
-				
+				$sql='UPDATE fe_users SET disable=0,usergroup='.$group.',pid='.$pid.' WHERE uid='.$user;
 				$GLOBALS['TYPO3_DB']->sql_query($sql);
 				$content="User Confirmed";
-			} else {
-				$content="ungültiger Token";
 			}
-
-		}
-		if ($action=="decline") {
-			$token=mysql_real_escape_string($token);
-			$sql="SELECT id,feuser_uid FROM tx_feregistrationprocess_user_info WHERE content='$token' AND type='adminconfirm_token'";
-			$res=$GLOBALS['TYPO3_DB']->sql_query($sql);
-			if ($row = $GLOBALS['TYPO3_DB']->sql_fetch_assoc($res)) {
-				$id=$row["id"];
-				$feuser_uid=$row["feuser_uid"];
-				$sql="UPDATE fe_users SET deleted='1',usergroup='$group',pid='$pid' WHERE uid='$feuser_uid'";
+			if ($action=='decline') {
+				$pid=getTSValue('config.usersAdminConfirmedPid',$this->conf);
+				$group=getTSValue('config.usersAdminConfirmedGroup',$this->conf);
+				$sql='UPDATE fe_users SET deleted=1,pid='.$pid.' WHERE uid='.$user;
 				$GLOBALS['TYPO3_DB']->sql_query($sql);
 				$content="User Deleted";
-			} else {
-				$content="ungültiger Token";
 			}
+		} else {
+			#t3lib_div::debug(array($row['registration_token'],$token));
+			$content='ungültiger Token';
 		}
-				return $content;
+		return $content;
 	}
 	
 }
