@@ -1,0 +1,4 @@
+eregi => preg_match
+pi2/pi3 umschreiben
+nochmal sql_injections abchecken, XSS Code
+validierungsfunktionen überprüfen
