@@ -1,7 +1,7 @@
 <?php
 
 ########################################################################
-# Extension Manager/Repository config file for ext "fe_registration_process".
+# Extension Manager/Repository config file for ext "feusermanagement".
 #
 # Auto generated 27-11-2009 22:57
 #

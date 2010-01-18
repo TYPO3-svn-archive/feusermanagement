@@ -1,4 +1,4 @@
-plugin.tx_feregistrationprocess_pi1 {
+plugin.tx_feusermanagement_pi1 {
 	config {
 		adminMail=dummy@youradmin.com
 		adminMailSubject=New Registration
@@ -18,7 +18,7 @@ plugin.tx_feregistrationprocess_pi1 {
 		userConfirmation=1
 		adminConfirmation=0
 		
-		template=typo3conf/ext/fe_registration_process/dummy_template.html
+		template=typo3conf/ext/feusermanagement/dummy_template.html
 	}
 	steps {
 		1.fields {

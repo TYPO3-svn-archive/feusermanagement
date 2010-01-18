@@ -23,23 +23,23 @@
 ***************************************************************/
 
 require_once(PATH_tslib.'class.tslib_pibase.php');
-require_once(t3lib_extMgm::extPath('fe_registration_process') . 'class.Field.php');
-require_once(t3lib_extMgm::extPath('fe_registration_process') . 'class.registration_model.php');
-require_once(t3lib_extMgm::extPath('fe_registration_process') . 'class.registration_view.php');
-require_once(t3lib_extMgm::extPath('fe_registration_process') . 'lib_general.php');
+require_once(t3lib_extMgm::extPath('feusermanagement') . 'class.Field.php');
+require_once(t3lib_extMgm::extPath('feusermanagement') . 'class.registration_model.php');
+require_once(t3lib_extMgm::extPath('feusermanagement') . 'class.registration_view.php');
+require_once(t3lib_extMgm::extPath('feusermanagement') . 'lib_general.php');
 //require_once('view.php');
 
 /**
- * Plugin 'ccm_registration' for the 'fe_registration_process' extension.
+ * Plugin 'ccm_registration' for the 'feusermanagement' extension.
  *
  * @author	Florian Bachmann <fbachmann@cross-content.com>
  * @package	TYPO3
- * @subpackage	tx_feregistrationprocess
+ * @subpackage	tx_feusermanagement
  */
-class tx_feregistrationprocess_pi1 extends tslib_pibase {
-	var $prefixId      = 'tx_feregistrationprocess_pi1';		// Same as class name
-	var $scriptRelPath = 'pi1/class.tx_feregistrationprocess_pi1.php';	// Path to this script relative to the extension dir.
-	var $extKey        = 'fe_registration_process';	// The extension key.
+class tx_feusermanagement_pi1 extends tslib_pibase {
+	var $prefixId      = 'tx_feusermanagement_pi1';		// Same as class name
+	var $scriptRelPath = 'pi1/class.tx_feusermanagement_pi1.php';	// Path to this script relative to the extension dir.
+	var $extKey        = 'feusermanagement';	// The extension key.
 	var $errMsg="";
 	var $adminError="";
 	var $uid;
@@ -152,7 +152,7 @@ class tx_feregistrationprocess_pi1 extends tslib_pibase {
 					'uid' => $this->uid,
 					'fields' => &$fields,
 					'step' =>$step,
-					'pi'=> 'tx_feregistrationprocess_pi1'
+					'pi'=> 'tx_feusermanagement_pi1'
 				);
 				t3lib_div::callUserFunction($userFunc, $params, $this);
 			}
@@ -236,7 +236,7 @@ class tx_feregistrationprocess_pi1 extends tslib_pibase {
 					'uid' => $this->uid,
 					'markers' => $markerArr,
 					'step' => $step,
-					'pi'=> 'tx_feregistrationprocess_pi1'
+					'pi'=> 'tx_feusermanagement_pi1'
 				);
 				if (is_array($tempMarkers = t3lib_div::callUserFunction($userFunc, $params, $this))) {
 					$markerArr=array_merge($markerArr,$tempMarkers);
@@ -349,7 +349,7 @@ class tx_feregistrationprocess_pi1 extends tslib_pibase {
 					'step' => $step,
 					'fields'=>$fields,
 					'valid'=>$valid,
-					'pi'=> 'tx_feregistrationprocess_pi1'
+					'pi'=> 'tx_feusermanagement_pi1'
 				);
 				$valid=t3lib_div::callUserFunction($userFunc, $params, $this);
 			}
@@ -372,7 +372,7 @@ class tx_feregistrationprocess_pi1 extends tslib_pibase {
 						$params = array(
 							'field' => $field,
 							'value'=>$value,
-							'pi'=> 'tx_feregistrationprocess_pi1'
+							'pi'=> 'tx_feusermanagement_pi1'
 						);
 						t3lib_div::callUserFunction($userFunc, $params, $this);
 					}
@@ -463,6 +463,7 @@ class tx_feregistrationprocess_pi1 extends tslib_pibase {
 		}
 		$adminToken=$row_feuser['registration_token'];#md5($TYPO3_CONF_VARS['SYS']['encryptionKey'].$row['registration_token']);
 		#t3lib_div::debug($adminToken);
+		
 		$confirmLink=$this->baseURL.'index.php?id='.$GLOBALS['TSFE']->id.'&adminAction=confirm&token='.md5($adminToken).'&fe_user='.$row_feuser['uid'];
 		$declineLink=$this->baseURL.'index.php?id='.$GLOBALS['TSFE']->id.'&adminAction=decline&token='.md5($adminToken).'&fe_user='.$row_feuser['uid'];
 		$markerArr["###ADMIN_ACCEPT###"]=$confirmLink;
@@ -632,8 +633,8 @@ class tx_feregistrationprocess_pi1 extends tslib_pibase {
 
 
 
-if (defined('TYPO3_MODE') && $TYPO3_CONF_VARS[TYPO3_MODE]['XCLASS']['ext/fe_registration_process/pi1/class.tx_feregistrationprocess_pi1.php'])	{
-	include_once($TYPO3_CONF_VARS[TYPO3_MODE]['XCLASS']['ext/fe_registration_process/pi1/class.tx_feregistrationprocess_pi1.php']);
+if (defined('TYPO3_MODE') && $TYPO3_CONF_VARS[TYPO3_MODE]['XCLASS']['ext/feusermanagement/pi1/class.tx_feusermanagement_pi1.php'])	{
+	include_once($TYPO3_CONF_VARS[TYPO3_MODE]['XCLASS']['ext/feusermanagement/pi1/class.tx_feusermanagement_pi1.php']);
 }
 
 ?>
