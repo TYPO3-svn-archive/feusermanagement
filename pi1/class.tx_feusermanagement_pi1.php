@@ -27,7 +27,6 @@ require_once(t3lib_extMgm::extPath('feusermanagement') . 'class.Field.php');
 require_once(t3lib_extMgm::extPath('feusermanagement') . 'class.registration_model.php');
 require_once(t3lib_extMgm::extPath('feusermanagement') . 'class.registration_view.php');
 require_once(t3lib_extMgm::extPath('feusermanagement') . 'lib_general.php');
-//require_once('view.php');
 
 /**
  * Plugin 'ccm_registration' for the 'feusermanagement' extension.
@@ -154,7 +153,6 @@ class tx_feusermanagement_pi1 extends tslib_pibase {
 					'uid' => $this->uid,
 					'fields' => &$fields,
 					'step' =>$step,
-					'pi'=> 'tx_feusermanagement_pi1'
 				);
 				t3lib_div::callUserFunction($userFunc, $params, $this);
 			}
@@ -238,7 +236,6 @@ class tx_feusermanagement_pi1 extends tslib_pibase {
 					'uid' => $this->uid,
 					'markers' => $markerArr,
 					'step' => $step,
-					'pi'=> 'tx_feusermanagement_pi1'
 				);
 				if (is_array($tempMarkers = t3lib_div::callUserFunction($userFunc, $params, $this))) {
 					$markerArr=array_merge($markerArr,$tempMarkers);
@@ -315,8 +312,7 @@ class tx_feusermanagement_pi1 extends tslib_pibase {
 				switch ($field->validation) {
 					case "email":
 						$pattern = "^[_a-z0-9-]+(\.[_a-z0-9-]+)*@[a-z0-9-]+(\.[a-z0-9-]+)*(\.[a-z]{2,3})$";
-						
-						//$pattern="^[\\\\w-_\\.+]*[\\\\w-_\\.]\@([\\\\w]+\\\\.)+[\\\\w]+[\\\\w]$";
+
 						
 						if (!eregi($pattern,$this->piVars[$field->htmlID])) {
 							
@@ -347,11 +343,9 @@ class tx_feusermanagement_pi1 extends tslib_pibase {
 		if (is_array($GLOBALS['TYPO3_CONF_VARS']['EXTCONF'][$this->extKey]['stepValidation'])) {
 			foreach($GLOBALS['TYPO3_CONF_VARS']['EXTCONF'][$this->extKey]['stepValidation'] as $userFunc) {
 				$params = array(
-					'uid' => $this->uid,
 					'step' => $step,
 					'fields'=>$fields,
 					'valid'=>$valid,
-					'pi'=> 'tx_feusermanagement_pi1'
 				);
 				$valid=t3lib_div::callUserFunction($userFunc, $params, $this);
 			}
@@ -374,7 +368,6 @@ class tx_feusermanagement_pi1 extends tslib_pibase {
 						$params = array(
 							'field' => $field,
 							'value'=>$value,
-							'pi'=> 'tx_feusermanagement_pi1'
 						);
 						t3lib_div::callUserFunction($userFunc, $params, $this);
 					}
@@ -464,9 +457,7 @@ class tx_feusermanagement_pi1 extends tslib_pibase {
 			$markerArr['###FE_'.strtoupper($key).'###']=$value;
 		}
 		$adminToken=$row_feuser['registration_token'];#md5($TYPO3_CONF_VARS['SYS']['encryptionKey'].$row['registration_token']);
-		#$confirmLink=$this->baseURL.'index.php?id='.$GLOBALS['TSFE']->id.'&adminAction=confirm&token='.md5($adminToken).'&fe_user='.$row_feuser['uid'];
 		$confirmLink=$this->pi_getPageLink($GLOBALS['TSFE']->id,$target='',$urlParameters=array($this->prefixId.'[adminAction]'=>'confirm',$this->prefixId.'[token]'=>md5($adminToken),$this->prefixId.'[fe_user]'=>$row_feuser['uid']));
-		#$declineLink=$this->baseURL.'index.php?id='.$GLOBALS['TSFE']->id.'&adminAction=decline&token='.md5($adminToken).'&fe_user='.$row_feuser['uid'];
 		$declineLink=$this->pi_getPageLink($GLOBALS['TSFE']->id,$target='',$urlParameters=array($this->prefixId.'[adminAction]'=>'decline',$this->prefixId.'[token]'=>md5($adminToken),$this->prefixId.'[fe_user]'=>$row_feuser['uid']));
 		$markerArr["###ADMIN_ACCEPT###"]=$confirmLink;
 		$markerArr["###ADMIN_DECLINE###"]=$declineLink;

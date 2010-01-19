@@ -35,12 +35,14 @@ require_once(t3lib_extMgm::extPath('feusermanagement') . 'lib_general.php');
  * @package	TYPO3
  * @subpackage	tx_feregistrationprocess
  */
-class tx_feregistrationprocess_pi2 extends tslib_pibase {
-	var $prefixId      = 'tx_feregistrationprocess_pi2';		// Same as class name
-	var $scriptRelPath = 'pi2/class.tx_feregistrationprocess_pi2.php';	// Path to this script relative to the extension dir.
+class tx_feusermanagement_pi2 extends tslib_pibase {
+	var $prefixId      = 'tx_feusermanagement_pi2';		// Same as class name
+	var $scriptRelPath = 'pi2/class.tx_feusermanagement_pi2.php';	// Path to this script relative to the extension dir.
 	var $extKey        = 'feusermanagement';	// The extension key.
 	var $pi_checkCHash = true;
 	var $fe_uid="";
+	var $baseURL='';
+	var $requiredMarker='';
 	/**
 	 * The main method of the PlugIn
 	 *
@@ -53,29 +55,27 @@ class tx_feregistrationprocess_pi2 extends tslib_pibase {
 		$this->conf=$conf;
 		$this->pi_setPiVarDefaults();
 		$this->pi_loadLL();
-		$this->requiredMarker="(*)";
-		if ($this->conf["config."]["requiredMarker"]) $this->requiredMarker=$this->conf["config."]["requiredMarker"];
-		escapeAllInputs();
+		$this->requiredMarker=getTSValue('config.requiredMarker',$this->conf);
+		$this->baseURL=getTSValue('config.baseURL',$GLOBALS['TSFE']->tmpl->setup);
+		if (!$this->baseURL) return 'config.baseURL not set';
+		
 		$this->modelLib=t3lib_div::makeInstance('registration_model');
 		$this->viewLib=t3lib_div::makeInstance('registration_view');
 		
-		$uid=$GLOBALS["TSFE"]->fe_user->getKey("ses","ccm_reg_uid");
-		$this->uid=$uid;
 		$checkInput=true;
 		
 		$fe_uid=$GLOBALS['TSFE']->fe_user->user['uid'];
 		$this->fe_uid=$fe_uid;
 		if (!$fe_uid) {
-			return "Sie sind nicht eingeloggt";
+			return 'No user is logged in';
 		}
 		
 		### Template ###
 		$confArr=t3lib_div::getIndpEnv("TYPO3_DOCUMENT_ROOT");
-		$templateFile=$conf["config."]["template"];
+		$templateFile=getTSValue('config.template',$this->conf);
 		if (!file_exists($templateFile)) {
 			return "Template File: '".$templateFile."' not found";
 		}
-		//$templateFile="fileadmin/templates/profil.html";
 		$templatef = $this->cObj->fileResource($templateFile);
 		
 		
@@ -97,15 +97,12 @@ class tx_feregistrationprocess_pi2 extends tslib_pibase {
 		
 		
 		if (!$step) {
-			//t3lib_div::debug(array("a"));
 			$GLOBALS["TSFE"]->fe_user->setKey("ses","ccm_prof_step",1);
 			$step=1;
 			$checkInput=false;
 		} else {
-			//t3lib_div::debug(array("b"));
 			$step=$GLOBALS["TSFE"]->fe_user->getKey("ses","ccm_prof_step");
 			if (($checkInput)&&($this->validateInputLastStep($step))) {
-				//t3lib_div::debug(array("c"));
 				$this->writeLastStepToTable($step);
 				$GLOBALS["TSFE"]->fe_user->setKey("ses","ccm_prof_step",$step+1);
 				$step=$step+1;
@@ -114,13 +111,11 @@ class tx_feregistrationprocess_pi2 extends tslib_pibase {
 		### CHECK FOR PROFILATION FINALIZED ###
 		$lastStep=$this->getLastStepNr();
 		$final=false;
-		//t3lib_div::debug(array("step"=>$step,"laststep"=>$lastStep));
+
 		if ($step>$lastStep) {
-			//t3lib_div::debug(array("d"));
 			$final=true;
 			
 		}
-		//t3lib_div::debug($final);
 		### GET TEMPLATES ###
 		$template=$this->cObj->getSubpart($templatef,"STEP_".$step);
 		$errorTempl=$this->cObj->getSubpart($templatef,"ERROR_PART");
@@ -135,6 +130,7 @@ class tx_feregistrationprocess_pi2 extends tslib_pibase {
 			if (is_array($GLOBALS['TYPO3_CONF_VARS']['EXTCONF'][$this->extKey]['preDeleteAccount'])) {
 				foreach($GLOBALS['TYPO3_CONF_VARS']['EXTCONF'][$this->extKey]['preDeleteAccount'] as $userFunc) {
 					$params = array(
+						'uid'=>$this->fe_uid
 					);
 					t3lib_div::callUserFunction($userFunc, $params, $this);
 
@@ -143,15 +139,10 @@ class tx_feregistrationprocess_pi2 extends tslib_pibase {
 			
 			$sql='DELETE FROM fe_users WHERE uid='.$fe_uid;
 			$GLOBALS['TYPO3_DB']->sql_query($sql);
-			$sql='DELETE FROM tx_feregistrationprocess_user_info WHERE 	feuser_uid='.$fe_uid;
-			$GLOBALS['TYPO3_DB']->sql_query($sql);
 			$content=$deleteTempl;
 			return $this->pi_wrapInBaseClass($content);
 		}
 		
-		
-		
-		//t3lib_div::debug($fields);
 		### GET JS FIELDS ###
 		$jsCode=array();
 		foreach($fields as $field) {
@@ -186,8 +177,6 @@ class tx_feregistrationprocess_pi2 extends tslib_pibase {
 					'step' =>$step
 				);
 				t3lib_div::callUserFunction($userFunc, $params, $this);
-					//$markerArr=array_merge($markerArr,$tempMarkers);
-				//}
 			}
 		} else {
 			$formJS.="if (!doSubmit) {
@@ -214,9 +203,7 @@ class tx_feregistrationprocess_pi2 extends tslib_pibase {
 			###OLD VALUES###
 		$markerArr=$this->viewLib->fillMarkers($allFields,$markerArr,$this);
 		$markerArr=array_merge($markerArr,$this->getFE_User_Marker());
-		//t3lib_div::debug($markerArr);
-		//t3lib_div::debug($markerArr);
-		//t3lib_div::debug($markerArr);
+
 			###ERROR_HTML###
 		$errorHTML=str_replace("###ERROR_MSG###",$this->errMsg,$errorTempl);
 		$markerArr["###ERROR###"]=($this->errMsg)?$errorHTML:"";
@@ -235,7 +222,6 @@ class tx_feregistrationprocess_pi2 extends tslib_pibase {
 					'uid' => $this->uid,
 					'markers' => $markerArr,
 					'step' => $step,
-					'pi'=> 'tx_feregistrationprocess_pi3'
 				);
 				if (is_array($tempMarkers = t3lib_div::callUserFunction($userFunc, $params, $this))) {
 					$markerArr=array_merge($markerArr,$tempMarkers);
@@ -248,7 +234,6 @@ class tx_feregistrationprocess_pi2 extends tslib_pibase {
 			
 			$template=str_replace(array_keys($markerArr),$markerArr,$finalTempl);
 			$this->updateFEUser();
-			//TODO:$this->createNewFEUser();
 		}
 		$content.='
 			<script type="text/javascript">
@@ -292,11 +277,10 @@ class tx_feregistrationprocess_pi2 extends tslib_pibase {
 				if (isset($_POST[$id])) {
 					$value=$_POST[$id];
 					
-					//t3lib_div::debug(array($id,$value));
 					$sql="DELETE FROM tx_feregistrationprocess_user_info WHERE feuser_uid='".$this->fe_uid."' AND type='$name'";
 					$GLOBALS['TYPO3_DB']->sql_query($sql);
 					$sql="INSERT INTO tx_feregistrationprocess_user_info (type,content,feuser_uid,istemp) VALUES('".$name."','".$value."','".$this->fe_uid."','0')";
-					//t3lib_div::debug($sql);
+					
 					$GLOBALS['TYPO3_DB']->sql_query($sql);
 					### HOOK afterValueInsert ###
 					if (is_array($GLOBALS['TYPO3_CONF_VARS']['EXTCONF'][$this->extKey]['afterValueInsert'])) {
@@ -305,7 +289,6 @@ class tx_feregistrationprocess_pi2 extends tslib_pibase {
 								'fe_uid' => $this->fe_uid,
 								'field' => $field,
 								'value'=>$value,
-								'pi'=> 'tx_feregistrationprocess_pi3'
 							);
 							t3lib_div::callUserFunction($userFunc, $params, $this);
 						}
@@ -364,10 +347,9 @@ class tx_feregistrationprocess_pi2 extends tslib_pibase {
 				}
 			}
 		}
-		if (strlen($updateStr)>0) $updateStr.=",tx_personalheader_last_cache_apos='0'";
-		//t3lib_div::debug(array($sql));
+		
 		$sql="UPDATE fe_users SET ".$updateStr." WHERE uid='".$this->fe_uid."'";
-		//t3lib_div::debug(array($sql));
+		
 		$GLOBALS['TYPO3_DB']->sql_query($sql);
 	}
 	
@@ -584,8 +566,7 @@ class tx_feregistrationprocess_pi2 extends tslib_pibase {
 					'uid' => $this->uid,
 					'step' => $step,
 					'fields'=>$fields,
-					'valid'=>$valid,
-					'pi'=> 'tx_feregistrationprocess_pi3'
+					'valid'=>$valid
 				);
 				$valid=t3lib_div::callUserFunction($userFunc, $params, $this);
 			}
@@ -596,8 +577,8 @@ class tx_feregistrationprocess_pi2 extends tslib_pibase {
 
 
 
-if (defined('TYPO3_MODE') && $TYPO3_CONF_VARS[TYPO3_MODE]['XCLASS']['ext/fe_registration_process/pi2/class.tx_feregistrationprocess_pi2.php'])	{
-	include_once($TYPO3_CONF_VARS[TYPO3_MODE]['XCLASS']['ext/fe_registration_process/pi2/class.tx_feregistrationprocess_pi2.php']);
+if (defined('TYPO3_MODE') && $TYPO3_CONF_VARS[TYPO3_MODE]['XCLASS']['ext/feusermanagement/pi2/class.tx_feusermanagement_pi2.php'])	{
+	include_once($TYPO3_CONF_VARS[TYPO3_MODE]['XCLASS']['ext/feusermanagement/pi2/class.tx_feusermanagement_pi2.php']);
 }
 
 ?>
