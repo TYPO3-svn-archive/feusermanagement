@@ -23,10 +23,10 @@
 ***************************************************************/
 
 require_once(PATH_tslib.'class.tslib_pibase.php');
-require_once(t3lib_extMgm::extPath('fe_registration_process') . 'class.Field.php');
-require_once(t3lib_extMgm::extPath('fe_registration_process') . 'class.registration_model.php');
-require_once(t3lib_extMgm::extPath('fe_registration_process') . 'class.registration_view.php');
-require_once(t3lib_extMgm::extPath('fe_registration_process') . 'lib_general.php');
+require_once(t3lib_extMgm::extPath('feusermanagement') . 'class.Field.php');
+require_once(t3lib_extMgm::extPath('feusermanagement') . 'class.registration_model.php');
+require_once(t3lib_extMgm::extPath('feusermanagement') . 'class.registration_view.php');
+require_once(t3lib_extMgm::extPath('feusermanagement') . 'lib_general.php');
 
 /**
  * Plugin 'ccm_registration_edit' for the 'fe_registration_process' extension.
@@ -35,10 +35,10 @@ require_once(t3lib_extMgm::extPath('fe_registration_process') . 'lib_general.php
  * @package	TYPO3
  * @subpackage	tx_feregistrationprocess
  */
-class tx_feregistrationprocess_pi3 extends tslib_pibase {
-	var $prefixId      = 'tx_feregistrationprocess_pi3';		// Same as class name
-	var $scriptRelPath = 'pi3/class.tx_feregistrationprocess_pi3.php';	// Path to this script relative to the extension dir.
-	var $extKey        = 'fe_registration_process';	// The extension key.
+class tx_feregistrationprocess_pi2 extends tslib_pibase {
+	var $prefixId      = 'tx_feregistrationprocess_pi2';		// Same as class name
+	var $scriptRelPath = 'pi2/class.tx_feregistrationprocess_pi2.php';	// Path to this script relative to the extension dir.
+	var $extKey        = 'feusermanagement';	// The extension key.
 	var $pi_checkCHash = true;
 	var $fe_uid="";
 	/**
@@ -596,8 +596,8 @@ class tx_feregistrationprocess_pi3 extends tslib_pibase {
 
 
 
-if (defined('TYPO3_MODE') && $TYPO3_CONF_VARS[TYPO3_MODE]['XCLASS']['ext/fe_registration_process/pi3/class.tx_feregistrationprocess_pi3.php'])	{
-	include_once($TYPO3_CONF_VARS[TYPO3_MODE]['XCLASS']['ext/fe_registration_process/pi3/class.tx_feregistrationprocess_pi3.php']);
+if (defined('TYPO3_MODE') && $TYPO3_CONF_VARS[TYPO3_MODE]['XCLASS']['ext/fe_registration_process/pi2/class.tx_feregistrationprocess_pi2.php'])	{
+	include_once($TYPO3_CONF_VARS[TYPO3_MODE]['XCLASS']['ext/fe_registration_process/pi2/class.tx_feregistrationprocess_pi2.php']);
 }
 
 ?>

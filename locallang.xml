@@ -7,8 +7,7 @@
 	<data type="array">
 		<languageKey index="default" type="array">
 			<label index="pi1_title">Frontend User Registration</label>
-			<label index="pi1_plus_wiz_description">Frontend User Management AjaxCalls</label>
-			<label index="pi3_title">Frontend User Edit Profile</label>
+			<label index="pi2_title">Frontend User Edit Profile</label>
 		</languageKey>
 	</data>
 </T3locallang>

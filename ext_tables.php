@@ -51,6 +51,8 @@ t3lib_extMgm::addPlugin(array('LLL:EXT:feusermanagement/locallang_db.xml:tt_cont
 t3lib_extMgm::addStaticFile($_EXTKEY,"pi1/static/","CCM Registration");
 
 
+
+
 t3lib_div::loadTCA('tt_content');
 $TCA['tt_content']['types']['list']['subtypes_excludelist'][$_EXTKEY.'_pi2']='layout,select_key';
 
@@ -58,15 +60,5 @@ $TCA['tt_content']['types']['list']['subtypes_excludelist'][$_EXTKEY.'_pi2']='la
 t3lib_extMgm::addPlugin(array('LLL:EXT:feusermanagement/locallang_db.xml:tt_content.list_type_pi2', $_EXTKEY.'_pi2'),'list_type');
 
 
-t3lib_extMgm::addStaticFile($_EXTKEY,"pi2/static/","CCM Registration Ajax Availability Checker");
-
-
-t3lib_div::loadTCA('tt_content');
-$TCA['tt_content']['types']['list']['subtypes_excludelist'][$_EXTKEY.'_pi3']='layout,select_key';
-
-
-t3lib_extMgm::addPlugin(array('LLL:EXT:feusermanagement/locallang_db.xml:tt_content.list_type_pi3', $_EXTKEY.'_pi3'),'list_type');
-
-
-t3lib_extMgm::addStaticFile($_EXTKEY,"pi3/static/","CCM Registration Edit Profile");
+t3lib_extMgm::addStaticFile($_EXTKEY,"pi2/static/","CCM Registration Edit Profile");
 ?>
