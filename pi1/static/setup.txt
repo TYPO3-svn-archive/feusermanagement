@@ -17,6 +17,9 @@ plugin.tx_feusermanagement_pi1 {
 		
 		userConfirmation=1
 		adminConfirmation=0
+		#only works if confirmation is not required
+		autologin=1
+		autologinRedirPid=1
 		
 		template=typo3conf/ext/feusermanagement/dummy_template.html
 	}

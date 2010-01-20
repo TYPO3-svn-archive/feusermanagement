@@ -419,7 +419,36 @@ class tx_feusermanagement_pi1 extends tslib_pibase {
 		
 		$GLOBALS['TYPO3_DB']->sql_query($sql);
 		$id=$GLOBALS['TYPO3_DB']->sql_insert_id ();
-
+		### HOOK afterregistration ###
+		if (is_array($GLOBALS['TYPO3_CONF_VARS']['EXTCONF'][$this->extKey]['afterUserCreate'])) {
+			foreach($GLOBALS['TYPO3_CONF_VARS']['EXTCONF'][$this->extKey]['afterUserCreate'] as $userFunc) {
+				$params = array(
+					'action' => 'new',
+					'uid'=>$id,
+				);
+				t3lib_div::callUserFunction($userFunc, $params, $this);
+			}
+		}
+		
+		if (!$disabled) {
+			if (getTSValue('config.autologin',$this->conf)) {
+				$loginData = array( 'uname' => $map['username'], 'uident'=> $map['password'], 'status' =>'login' ); 
+				$GLOBALS['TSFE']->fe_user->checkPid=0; 
+				$info = $GLOBALS['TSFE']->fe_user->getAuthInfoArray(); 
+				$user = $GLOBALS['TSFE']->fe_user->fetchUserRecord($info['db_user'],$loginData['uname']); 
+				$login_success = $GLOBALS['TSFE']->fe_user->compareUident($user,$loginData); 
+				if($login_success){ 
+					$GLOBALS['TSFE']->fe_user->createUserSession($user); 
+					$GLOBALS['TSFE']->loginUser = 1; 
+					$GLOBALS['TSFE']->fe_user->start(); 
+				}
+				if ($redirPid=getTSValue('config.autologinRedirPid',$this->conf)) {
+					t3lib_div::debug('Location: '.$this->baseURL.$this->cObj->getTypoLink_URL($redirPid));
+					header('Location: '.$this->baseURL.$this->cObj->getTypoLink_URL($redirPid));
+				}
+			}
+		}
+		
 		if (getTSValue('config.userConfirmation',$this->conf)) $this->generateUserMailConfirmation($id);
 
 	}
