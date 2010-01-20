@@ -1,42 +1,38 @@
 <?php
 	
 class registration_view {
-	function getFormJS($field) {
+	var $emailReg='^[\\w-_\.+]*[\\w-_\.]\@([\\w-_]+\\.)+[\\w]+[\\w]$';
+	var $passwordReg='^.*(?=.{6,})(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).*$';
+	function getFieldValidationJS($field,$obj) {
 		if (!$field->jsvalidation) return;
+		
 		$js='';
-		if ($field->type=='checkbox') {
-			if ($field->required) {
-				$js='
-					if (!(document.getElementById("'.$field->htmlID.'").checked)) {
-						doSubmit=false;
-						alertMessage="'.$field->notCheckedMessage.'";
-					}
-				';
-			}
-		} else {
-			if ($field->required) {
-				$js='
-					if (!((document.getElementById("'.$field->htmlID.'").value.length)>0)) {
-						doSubmit=false;
-						alertMessage="'.$field->notCheckedMessage.'";
-					}
-				';
-			}
-		}
-		
-		
 		switch ($field->validation) {
 			case "email":
+				$reg=str_replace(chr(92),chr(92).chr(92),$this->emailReg);
 				$js='
-					var x="";
-					x=document.getElementById("'.$field->htmlID.'").value;
-					 var emailReg = "^[\\\\w-_\\.+]*[\\\\w-_\\.]\@([\\\\w]+\\\\.)+[\\\\w]+[\\\\w]$";
+					var '.$field->htmlID.'_val="";
+					'.$field->htmlID.'_val=document.getElementById("'.$field->htmlID.'").value;
+					 var emailReg = "'.$reg.'";
 					 var regex = new RegExp(emailReg);
-					 if (!regex.test(x)) {
+					 if (!regex.test('.$field->htmlID.'_val)) {
 						doSubmit=false;
-						alertMessage="'.$field->emailErrorMessage.'";
+						alertMessage="'.$obj->pi_getLL('email_error','',FALSE).'";
 					 } 
-				  
+					
+				';
+				break;
+			case "password":
+				$reg=str_replace(chr(92),chr(92).chr(92),$this->emailReg);
+				$js='
+					var '.$field->htmlID.'_val="";
+					'.$field->htmlID.'_val=document.getElementById("'.$field->htmlID.'").value;
+					 var pwdReg = "'.$reg.'";
+					 var regex = new RegExp(pwdReg);
+					 if (!regex.test('.$field->htmlID.'_val)) {
+						doSubmit=false;
+						alertMessage="'.$obj->pi_getLL('password_error','',FALSE).'";
+					 }
 				';
 				break;
 			case "regExp":
@@ -46,7 +42,56 @@ class registration_view {
 				break;
 			
 		}
+		
+		if ($field->required) {
+			if ($field->type=='checkbox') {
+				$js.='
+					if (!(document.getElementById("'.$field->htmlID.'").checked)) {
+						doSubmit=false;
+						alertMessage="'.$field->notCheckedMessage.'";
+					}
+				';
+			} else {
+				$js.='
+					if (!((document.getElementById("'.$field->htmlID.'").value.length)>0)) {
+						doSubmit=false;
+						alertMessage="'.$field->notCheckedMessage.'";
+					}
+				';
+			}
+		}
 		return $js;
+	}
+	function getFormJS($fieldJSArr,$fields,$step,$obj) {
+		$formJS='
+function '.$obj->prefixId.'_check_FormSubmit() {
+	doSubmit=true;
+	alertMessage="";
+	//<!--FIELD_JS_START-->
+	###FORM_VALIDATING###
+	//<!--FIELD_JS_END-->
+	if (!doSubmit) {
+		###ERROR_ACTION###
+	}
+	return doSubmit;
+}		';
+		$submitErrorAction=getTSValue('config.formNoSubmitAction',$obj->conf);
+		$formJSMarker=array();
+		$formJSMarker['###FORM_VALIDATING###']=implode("\n",$fieldJSArr);
+		$formJSMarker['###ERROR_ACTION###']=$submitErrorAction;
+		$formJS=str_replace(array_keys($formJSMarker),$formJSMarker,$formJS);
+		if (is_array($GLOBALS['TYPO3_CONF_VARS']['EXTCONF'][$obj->extKey]['formSubmitJS'])) {
+			foreach($GLOBALS['TYPO3_CONF_VARS']['EXTCONF'][$obj->extKey]['formSubmitJS'] as $userFunc) {
+				$params = array(
+					'formJS' => &$formJS,
+					'functionName' => $obj->prefixId.'_check_FormSubmit',
+					'fields' => $fields,
+					'step' =>$step
+				);
+				t3lib_div::callUserFunction($userFunc, $params, $obj);
+			}
+		}
+		return $formJS;
 	}
 	function getJS($field,$obj) {
 		$trueAction="";
@@ -186,10 +231,10 @@ class registration_view {
 			$markerArr["###".$field->markerName."_REQUIRED###"]=($field->required)?$obj->requiredMarker:"";
 			$markerArr["###".$field->markerName."_ERROR###"]="<div id='".$field->errField."'></div>";
 			$htmlFields[$field->markerName]=$temp;
-			if ($field->toDB) {
-				$value=$obj->getValueFromSession($field);
-				$markerArr["###".$field->markerName."_VALUE###"]=$value;
-			}
+			
+			$value=$obj->getValueFromSession($field);
+			$markerArr["###".$field->markerName."_VALUE###"]=$value;
+		
 		}
 		$markerArr["###GENERAL_REQUIRED###"]=$obj->requiredMarker;
 		$markerArr["###FORM_BEGIN###"]="<form name='".$obj->prefixId."reg_form' action='".$obj->baseURL.$obj->cObj->getTypoLink_URL($GLOBALS['TSFE']->id)."' method='POST' onSubmit='return ".$obj->prefixId."_check_FormSubmit();'>";

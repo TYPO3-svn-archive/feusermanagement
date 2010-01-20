@@ -1,28 +1,26 @@
 <?
 
 class Field {
-		public $name;
+		public $additionalData='';
+		public $equal='';
+		public $errField='';
+		public $fe_user='';
 		public $htmlID;
-		public $markerName;
-		public $label="";
-		public $type="text";
-		public $additionalData="";
-		public $required=0;
-		public $value;
-		public $toDB=1;
-		public $validation;
 		public $jsvalidation=0;
-		public $onBlurCode="";
-		public $tempID=0;
-		public $unique=0;
-		public $equal="";
-		public $tooltip="";
+		public $label='';
 		public $list=array();
-		public $notCheckedMessage="";
+		public $markerName;
+		public $name;
+		public $notCheckedMessage='';
+		public $onBlurCode='';
+		public $required=0;
+		public $requires='';
+		public $tempID=0;
+		public $tooltip='';
 		public $TS=array();
-		public $errField="";
-		public $fe_user="";
-		public $requires="";
-		public $emailErrorMessage="";
+		public $type='text';
+		public $unique=0;
+		public $validation;
+		public $value;
 	}
 ?>

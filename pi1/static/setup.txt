@@ -20,6 +20,7 @@ plugin.tx_feusermanagement_pi1 {
 		#only works if confirmation is not required
 		autologin=1
 		autologinRedirPid=1
+		formNoSubmitAction=alert(alertMessage);
 		
 		template=typo3conf/ext/feusermanagement/dummy_template.html
 	}
@@ -42,6 +43,7 @@ plugin.tx_feusermanagement_pi1 {
 				toDB=1
 				type=password
 				label=LL_field_password
+				validation=password
 				tooltip=LL_field_password_tooltip
 			}
 			password2 {
@@ -51,6 +53,7 @@ plugin.tx_feusermanagement_pi1 {
 				label=LL_field_password2
 				tooltip=LL_field_password2_tooltip
 				equal=password
+				validation=password
 				jsvalidation=1
 			}
 			email {

@@ -170,42 +170,17 @@ class tx_feusermanagement_pi1 extends tslib_pibase {
 		}
 		
 		### JS SUBMIT ###
-		$formJSarr=array();
+		$fieldJSArr=array();
 		// Für jedes feld die Prüfung vor nem Submit
 		foreach($fields as $field) {
 			$js="";
-			$js=$this->viewLib->getFormJS($field);
-			if (strlen($js)>0) {
-				$formJSarr[]=$js;
+			$js=$this->viewLib->getFieldValidationJS($field,$this);
+			if ($js) {
+				$fieldJSArr[]=$js;
 			}
 		}
-		$formJS='
-			doSubmit=true;
-			alertMessage="";
-			'.implode(" ",$formJSarr).'
-			
-		';
-		if (is_array($GLOBALS['TYPO3_CONF_VARS']['EXTCONF'][$this->extKey]['formWrapper'])) {
-			foreach($GLOBALS['TYPO3_CONF_VARS']['EXTCONF'][$this->extKey]['formWrapper'] as $userFunc) {
-				$params = array(
-					'formJS' => &$formJS,
-					'fields' => $fields,
-					'step' =>$step
-				);
-				t3lib_div::callUserFunction($userFunc, $params, $this);
-			}
-		} else {
-			$formJS.="if (!doSubmit) {
-					alert(alertMessage);
-				}";
-		}
-		$formWrapperJS='
-			function '.$obj->prefixId.'_check_FormSubmit() {
-				'.$formJS.'
-				return doSubmit;
-			}
-		';
-		
+				
+		$formJS=$this->viewLib->getFormJS($fieldJSArr,$fields,$step,$this);
 		### GET HTML ###
 		$markerArr=array();
 		$htmlFields=array();
@@ -251,12 +226,14 @@ class tx_feusermanagement_pi1 extends tslib_pibase {
 			$this->adminMailTemplate=str_replace(array_keys($markerArr),$markerArr,$this->adminMailTemplate);
 			$this->createNewFEUser();
 		}
-		$content.='
+		
+		$js='
 			<script type="text/javascript">
 				'.implode(" ",$jsCode).'
-				'.$formWrapperJS.'
+				'.$formJS.'
 			</script>
 		';
+		$GLOBALS['TSFE']->additionalHeaderData['feusermanagementjs']=$js;
 		
 		$content.=$template;
 		
@@ -311,17 +288,17 @@ class tx_feusermanagement_pi1 extends tslib_pibase {
 			if ($field->validation) {
 				switch ($field->validation) {
 					case "email":
-						$pattern = "^[_a-z0-9-]+(\.[_a-z0-9-]+)*@[a-z0-9-]+(\.[a-z0-9-]+)*(\.[a-z]{2,3})$";
+						$pattern = '/'.$this->viewLib->emailReg.'/';
 
 						
-						if (!eregi($pattern,$this->piVars[$field->htmlID])) {
+						if (!preg_match($pattern,$this->piVars[$field->htmlID])) {
 							
 							$valid=false;
 							$this->errMsg=$this->pi_getLL('email_error','',FALSE);
 						}
 						break;
-					case "//password":
-						$pattern="/^.*(?=.{6,})(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).*$/";
+					case "password":
+						$pattern='/'.$this->viewLib->passwordReg.'/';
 												
 						if (!preg_match($pattern,$this->piVars[$field->htmlID])) {
 							$valid=false;

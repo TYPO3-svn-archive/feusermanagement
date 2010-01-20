@@ -30,7 +30,7 @@
 					}
 				}
 				$field->notCheckedMessage=($field->type=="checkbox")?("'".$obj->prepareMessage(array($obj->pi_getLL('email_error','',FALSE),$field->name))):$obj->prepareMessage(array($obj->pi_getLL('not_enter','',FALSE),$field->name));
-				$field->emailErrorMessage=$obj->pi_getLL('email_error','',FALSE);
+				#$field->emailErrorMessage=
 				//$field->toDB=getTSValue();
 				
 				if (array_key_exists("required",$TSAttributes)) $field->required=$TSAttributes["required"];
