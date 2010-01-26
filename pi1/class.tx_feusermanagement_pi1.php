@@ -54,14 +54,13 @@ class tx_feusermanagement_pi1 extends tslib_pibase {
 	var $currStep=0;
 	var $baseURL='';
 	
+	
 	function main($content,$conf)	{
 		global $TYPO3_CONF_VARS;
 		$this->conf=$conf;
 		$this->pi_setPiVarDefaults();
 		$this->pi_loadLL();
-		$this->pi_USER_INT_obj=1;	// Configuring so caching is not expected. This value means that no cHash params are ever set. We do this, because it's a USER_INT object!
-		
-		#t3lib_div::debug($this->piVars);
+		$this->pi_USER_INT_obj=1;
 		
 		$this->baseURL=getTSValue('config.baseURL',$GLOBALS['TSFE']->tmpl->setup);
 		if (!$this->baseURL) return 'config.baseURL not set';
@@ -69,8 +68,7 @@ class tx_feusermanagement_pi1 extends tslib_pibase {
 		$this->requiredMarker=getTSValue('config.requiredMarker',$conf);
 		$this->modelLib=t3lib_div::makeInstance('registration_model');
 		$this->viewLib=t3lib_div::makeInstance('registration_view');
-		
-		$banned=false;
+
 		$start_registration=false;
 		
 		if ($this->conf["config."]["userConfirmation"]) $this->requireUserConfirm=1;
@@ -166,7 +164,6 @@ class tx_feusermanagement_pi1 extends tslib_pibase {
 			if (strlen($js)>0) {
 				$jsCode[]=$js;
 			}
-			
 		}
 		
 		### JS SUBMIT ###
@@ -367,7 +364,7 @@ class tx_feusermanagement_pi1 extends tslib_pibase {
 		
 		foreach($allFields as $field) {
 			if ($field->fe_user) {
-				$map[$field->fe_user]=$this->getValueFromSession($field);
+				$map[$field->fe_user]=mysql_real_escape_string($this->getValueFromSession($field));
 			}
 		}
 		$token=md5(rand());
@@ -565,12 +562,7 @@ class tx_feusermanagement_pi1 extends tslib_pibase {
 		}
 		return $steps;
 	}
-	function replaceNumeratedMarkers($content,$arr) {
-		for ($i=0;$i<count($arr);$i++) {
-			$content=str_replace('###'.($i+1).'###',$arr[$i],$content);
-		}
-		return $content;
-	}
+
 	function getString($value) {
 		if (strpos($value,"LL_user")===0 || strpos($value,"LL_field")===0) {
 			$pos=max(strpos($value,"user"),strpos($value,"field"));

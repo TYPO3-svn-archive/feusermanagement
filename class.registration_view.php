@@ -14,8 +14,7 @@ class registration_view {
 					$reg=str_replace(chr(92),chr(92).chr(92),$this->emailReg);
 					$js.='
 						var '.$field->htmlID.'_val=document.getElementById("'.$field->htmlID.'").value;
-						var emailReg = "'.$reg.'";
-						var regex = new RegExp(emailReg);
+						var regex = new RegExp("'.$reg.'");
 						if (!regex.test('.$field->htmlID.'_val)) {
 							doSubmit=false;
 							alertMessage="'.$obj->pi_getLL('email_error','',FALSE).'";
@@ -27,8 +26,7 @@ class registration_view {
 					$reg=str_replace(chr(92),chr(92).chr(92),$this->passwordReg);
 					$js.='
 						var '.$field->htmlID.'_val=document.getElementById("'.$field->htmlID.'").value;
-						var pwdReg = "'.$reg.'";
-						var regex = new RegExp(pwdReg);
+						var regex = new RegExp("'.$reg.'");
 						if (!regex.test('.$field->htmlID.'_val)) {
 							doSubmit=false;
 							alertMessage="'.$obj->pi_getLL('password_error','',FALSE).'";
@@ -40,8 +38,7 @@ class registration_view {
 					$reg=str_replace(chr(92),chr(92).chr(92),$field->regExp);
 					$js.='
 						var '.$field->htmlID.'_val=document.getElementById("'.$field->htmlID.'").value;
-						var userReg'.$field->htmlID.' = "'.$reg.'";
-						var regex = new RegExp(userReg'.$field->htmlID.');
+						var regex = new RegExp("'.$reg.'");
 						if (!regex.test('.$field->htmlID.'_val)) {
 							doSubmit=false;
 							alertMessage="'.$obj->pi_getLL('email_error','',FALSE).'";
@@ -137,10 +134,10 @@ function '.$obj->prefixId.'_check_FormSubmit() {
 		switch ($field->onBlurValidation) {
 			case "email":
 				if (!($falseAction)) $falseAction="alert(".$obj->pi_getLL('email_error_value_js','',FALSE).");";
+				$reg=str_replace(chr(92),chr(92).chr(92),$this->emailReg);
 				$js='
-				function test'.$field->tempID.'(src) {
-				     var emailReg = "^[\\\\w-_\\.+]*[\\\\w-_\\.]\@([\\\\w-_]+\\\\.)+[\\\\w]+[\\\\w]$";
-				     var regex = new RegExp(emailReg);
+				function test'.$field->htmlID.'(src) {
+				     var regex = new RegExp("'.$reg.'");
 				     if (regex.test(src)) {
 						'.$trueAction.'
 					 } else if (src.length>0){
@@ -150,11 +147,11 @@ function '.$obj->prefixId.'_check_FormSubmit() {
 				';
 				break;
 			case "password":
+				$reg=str_replace(chr(92),chr(92).chr(92),$this->passwordReg);
 				if (!($falseAction)) $falseAction="alert('".$obj->pi_getLL('password_error','',FALSE)."');";
 				$js='
-				function test'.$field->tempID.'(src) {
-				     var emailReg = "/^.*(?=.{6,})(?=.*\\\\d)(?=.*[a-z])(?=.*[A-Z]).*$/"; 
-				     var regex = new RegExp(emailReg);
+				function test'.$field->htmlID.'(src) {
+				     var regex = new RegExp("'.$reg.'");
 				     if (regex.test(src)) {
 						'.$trueAction.'
 					 } else if (src.length>0){
@@ -162,15 +159,13 @@ function '.$obj->prefixId.'_check_FormSubmit() {
 					 }
 				  }
 				';
-				$js='function test'.$field->tempID.'(src) {}';
-				//$js="";
 			
 				break;
 			case "regExp":
+				$reg=str_replace(chr(92),chr(92).chr(92),$field->regExp);
 				$js='
-				function test'.$field->tempID.'(src) {
-				     var emailReg = "'.$field->onBlurCode.'";
-				     var regex = new RegExp(emailReg);
+				function test'.$field->htmlID.'(src) {
+				     var regex = new RegExp("'.$reg.'");
 				     if (regex.test(src)) {
 						'.$trueAction.'
 					 } else {
@@ -205,7 +200,7 @@ function '.$obj->prefixId.'_check_FormSubmit() {
 			if (!$field->value) {
 				$field->value=$obj->getValueFromSession($field);
 			}
-			if ($field->onBlurValidation) $onBlur=" onblur='test".$field->tempID."(this.value)' ";
+			if ($field->onBlurValidation) $onBlur=" onblur='test".$field->htmlID."(this.value)' ";
 			switch ($field->type) {
 				case "text":
 					if ($_POST[$field->htmlID]) {

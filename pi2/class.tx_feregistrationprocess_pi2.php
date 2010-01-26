@@ -55,10 +55,12 @@ class tx_feusermanagement_pi2 extends tslib_pibase {
 		$this->conf=$conf;
 		$this->pi_setPiVarDefaults();
 		$this->pi_loadLL();
-		$this->requiredMarker=getTSValue('config.requiredMarker',$this->conf);
+		$this->pi_USER_INT_obj=1;
+		
 		$this->baseURL=getTSValue('config.baseURL',$GLOBALS['TSFE']->tmpl->setup);
 		if (!$this->baseURL) return 'config.baseURL not set';
 		
+		$this->requiredMarker=getTSValue('config.requiredMarker',$this->conf);
 		$this->modelLib=t3lib_div::makeInstance('registration_model');
 		$this->viewLib=t3lib_div::makeInstance('registration_view');
 		
@@ -71,25 +73,23 @@ class tx_feusermanagement_pi2 extends tslib_pibase {
 		}
 		
 		### Template ###
-		$confArr=t3lib_div::getIndpEnv("TYPO3_DOCUMENT_ROOT");
-		$templateFile=getTSValue('config.template',$this->conf);
+		$templateFile=getTSValue('config.template',$conf);
 		if (!file_exists($templateFile)) {
 			return "Template File: '".$templateFile."' not found";
 		}
+
 		$templatef = $this->cObj->fileResource($templateFile);
-		
-		
 		$this->templatefile=$templatef;
-		//t3lib_div::debug(array($templateFile,$templatef));
+		
 		$step=$GLOBALS["TSFE"]->fe_user->getKey("ses","ccm_prof_step");
 		
 		### SPRUNG AUF VORGÄNGERSEITE? ###
-		if ($_GET["backlinkToStep"]&&$step) { ###SESSION EXISTIERT, UND ER WILL ZURÜCK ###
-			$back=$_GET["backlinkToStep"];
-			$step=$GLOBALS["TSFE"]->fe_user->getKey("ses","ccm_prof_step");
+		if ($this->piVars['backlinkToStep']&&$GLOBALS["TSFE"]->fe_user->getKey("ses","ccm_reg_step")) { ###SESSION EXISTIERT, UND ER WILL ZURÜCK ###
+			$back=$this->piVars["backlinkToStep"];
+			$step=$GLOBALS["TSFE"]->fe_user->getKey("ses","ccm_reg_step");
 			$back=(int)$back;
 			if (($back>0) && ($back<$step)) {
-				$GLOBALS["TSFE"]->fe_user->setKey("ses","ccm_prof_step",$back);
+				$GLOBALS["TSFE"]->fe_user->setKey("ses","ccm_reg_step",$back);
 				$checkInput=false;
 			}
 		}
@@ -103,7 +103,7 @@ class tx_feusermanagement_pi2 extends tslib_pibase {
 		} else {
 			$step=$GLOBALS["TSFE"]->fe_user->getKey("ses","ccm_prof_step");
 			if (($checkInput)&&($this->validateInputLastStep($step))) {
-				$this->writeLastStepToTable($step);
+				$this->writeLastStepToSession($step);
 				$GLOBALS["TSFE"]->fe_user->setKey("ses","ccm_prof_step",$step+1);
 				$step=$step+1;
 			}
@@ -125,7 +125,7 @@ class tx_feusermanagement_pi2 extends tslib_pibase {
 		$fields=$this->modelLib->getCurrentFields($this->conf["steps."][$step."."],$this);
 		
 		
-		if ($_GET['deleteAccount']) {
+		if ($this->piVars['deleteAccount']) {
 			
 			if (is_array($GLOBALS['TYPO3_CONF_VARS']['EXTCONF'][$this->extKey]['preDeleteAccount'])) {
 				foreach($GLOBALS['TYPO3_CONF_VARS']['EXTCONF'][$this->extKey]['preDeleteAccount'] as $userFunc) {
@@ -151,7 +151,6 @@ class tx_feusermanagement_pi2 extends tslib_pibase {
 			if (strlen($js)>0) {
 				$jsCode[]=$js;
 			}
-			
 		}
 		### JS SUBMIT ###
 		$formJSarr=array();
@@ -267,7 +266,7 @@ class tx_feusermanagement_pi2 extends tslib_pibase {
 		}
 		return "";
 	}
-	function writeLastStepToTable($step) {
+	function writeLastStepToSession($step) {
 		
 		$fields=$this->modelLib->getCurrentFields($this->conf["steps."][$step."."],$this);
 		foreach($fields as $field) {
