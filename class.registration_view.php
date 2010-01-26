@@ -7,42 +7,68 @@ class registration_view {
 		if (!$field->jsvalidation) return;
 		
 		$js='';
-		switch ($field->validation) {
-			case "email":
-				$reg=str_replace(chr(92),chr(92).chr(92),$this->emailReg);
-				$js='
-					var '.$field->htmlID.'_val="";
-					'.$field->htmlID.'_val=document.getElementById("'.$field->htmlID.'").value;
-					 var emailReg = "'.$reg.'";
-					 var regex = new RegExp(emailReg);
-					 if (!regex.test('.$field->htmlID.'_val)) {
-						doSubmit=false;
-						alertMessage="'.$obj->pi_getLL('email_error','',FALSE).'";
-					 } 
-					
-				';
-				break;
-			case "password":
-				$reg=str_replace(chr(92),chr(92).chr(92),$this->emailReg);
-				$js='
-					var '.$field->htmlID.'_val="";
-					'.$field->htmlID.'_val=document.getElementById("'.$field->htmlID.'").value;
-					 var pwdReg = "'.$reg.'";
-					 var regex = new RegExp(pwdReg);
-					 if (!regex.test('.$field->htmlID.'_val)) {
-						doSubmit=false;
-						alertMessage="'.$obj->pi_getLL('password_error','',FALSE).'";
-					 }
-				';
-				break;
-			case "regExp":
-				###TODO:
-				$js='
-				';
-				break;
-			
+		$validations=split(',',$field->validation);
+		foreach($validations as $validation) {
+			switch ($field->validation) {
+				case 'email':
+					$reg=str_replace(chr(92),chr(92).chr(92),$this->emailReg);
+					$js.='
+						var '.$field->htmlID.'_val=document.getElementById("'.$field->htmlID.'").value;
+						var emailReg = "'.$reg.'";
+						var regex = new RegExp(emailReg);
+						if (!regex.test('.$field->htmlID.'_val)) {
+							doSubmit=false;
+							alertMessage="'.$obj->pi_getLL('email_error','',FALSE).'";
+						} 
+						
+					';
+					break;
+				case 'password':
+					$reg=str_replace(chr(92),chr(92).chr(92),$this->passwordReg);
+					$js.='
+						var '.$field->htmlID.'_val=document.getElementById("'.$field->htmlID.'").value;
+						var pwdReg = "'.$reg.'";
+						var regex = new RegExp(pwdReg);
+						if (!regex.test('.$field->htmlID.'_val)) {
+							doSubmit=false;
+							alertMessage="'.$obj->pi_getLL('password_error','',FALSE).'";
+						}
+					';
+					break;
+				
+				case 'regExp':
+					$reg=str_replace(chr(92),chr(92).chr(92),$field->regExp);
+					$js.='
+						var '.$field->htmlID.'_val=document.getElementById("'.$field->htmlID.'").value;
+						var userReg'.$field->htmlID.' = "'.$reg.'";
+						var regex = new RegExp(userReg'.$field->htmlID.');
+						if (!regex.test('.$field->htmlID.'_val)) {
+							doSubmit=false;
+							alertMessage="'.$obj->pi_getLL('email_error','',FALSE).'";
+						} 
+						
+					';
+					break;	
+			}
 		}
-		
+		if ($field->equal) {
+			$equalField=$obj->modelLib->getField($field->equal,$obj);
+			$js='
+				if (document.getElementById("'.$field->htmlID.'").value!=document.getElementById("'.$equalField->htmlID.'").value) {
+					doSubmit=false;
+					alertMessage="'.$obj->prepareMessage(array($obj->pi_getLL('equal_error','',FALSE),$field->label,$equalField->label)).'";
+				}
+			';
+		}
+		if ($field->requires) {
+			$reqField=$obj->modelLib->getField($field->requires,$obj);
+				$js='
+					if (document.getElementById("'.$field->htmlID.'").value && !document.getElementById("'.$reqField->htmlID.'").value) {
+						doSubmit=false;
+						alertMessage="'.$obj->prepareMessage(array($obj->pi_getLL('required_error','',FALSE),$field->label,$reqField->label)).'";
+					}
+				';
+		}
 		if ($field->required) {
 			if ($field->type=='checkbox') {
 				$js.='

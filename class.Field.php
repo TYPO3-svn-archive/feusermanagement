@@ -21,6 +21,7 @@ class Field {
 		public $type='text';
 		public $unique=0;
 		public $validation;
+		public $regExp;
 		public $value;
 	}
 ?>

@@ -11,7 +11,7 @@
 			<label index="list_mode_3">Mode 3</label>
 			<label index="back">Back</label>
 			<label index="submit_button_label">Click here to submit value</label>
-			
+			<label index="required_error">Field '###1###' requires Field '###2###' to be set</label>
 			<label index="not_enter">You did not enter a value for '###1###'</label>
 			<label index="unique_error">Please select a different value for the field ###1###</label>
 			<label index="equal_error">You did not enter equal values for the fields ###1### and ###2###</label>

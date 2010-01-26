@@ -173,7 +173,7 @@ class tx_feusermanagement_pi1 extends tslib_pibase {
 		$fieldJSArr=array();
 		// Für jedes feld die Prüfung vor nem Submit
 		foreach($fields as $field) {
-			$js="";
+			$js='';
 			$js=$this->viewLib->getFieldValidationJS($field,$this);
 			if ($js) {
 				$fieldJSArr[]=$js;
@@ -275,6 +275,7 @@ class tx_feusermanagement_pi1 extends tslib_pibase {
 					$this->errMsg=$this->prepareMessage(array($this->pi_getLL('unique_error','',FALSE),$field->name));
 				}
 			}
+			
 			if ($field->equal) {
 				$ref=$field->equal;
 				$id=$field->htmlID;
@@ -283,7 +284,6 @@ class tx_feusermanagement_pi1 extends tslib_pibase {
 					$valid=false;
 					$this->errMsg=$this->prepareMessage(array($this->pi_getLL('equal_error','',FALSE),$field->name,$fields[$ref]->name));
 				}
-				#t3lib_div::debug($field);
 			}
 			if ($field->validation) {
 				switch ($field->validation) {
@@ -307,8 +307,8 @@ class tx_feusermanagement_pi1 extends tslib_pibase {
 						break;
 					case "regExp":
 						
-						$pattern = "";
-						if (!eregi($pattern,$this->piVars[$field->htmlID])) {
+						$pattern = '/'.$field->regExp.'/';
+						if (!preg_match($pattern,$this->piVars[$field->htmlID])) {
 							$valid=false;
 							$this->errMsg=$this->prepareMessage(array(pi_getLL('pattern_error','',FALSE),$field->label));
 						}
@@ -565,7 +565,12 @@ class tx_feusermanagement_pi1 extends tslib_pibase {
 		}
 		return $steps;
 	}
-
+	function replaceNumeratedMarkers($content,$arr) {
+		for ($i=0;$i<count($arr);$i++) {
+			$content=str_replace('###'.($i+1).'###',$arr[$i],$content);
+		}
+		return $content;
+	}
 	function getString($value) {
 		if (strpos($value,"LL_user")===0 || strpos($value,"LL_field")===0) {
 			$pos=max(strpos($value,"user"),strpos($value,"field"));

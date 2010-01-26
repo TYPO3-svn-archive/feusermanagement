@@ -8,6 +8,7 @@
 			$fields=array();
 			if (!is_array($TSfields)) return $fields;
 			foreach($TSfields as $key=>$TSAttributes) {
+				#t3lib_div::debug($TSAttributes);
 				$i++;
 				$name=$obj->removeDot($key);
 				$field=new Field();
@@ -46,6 +47,7 @@
 				if (array_key_exists("tooltip",$TSAttributes)) $field->tooltip=$obj->getString($TSAttributes["tooltip"]);
 				if (array_key_exists("unique",$TSAttributes)) $field->unique=$TSAttributes["unique"];	
 				if (array_key_exists("equal",$TSAttributes)) $field->equal=$TSAttributes["equal"];	
+				if (array_key_exists("regExp",$TSAttributes)) $field->regExp=$TSAttributes["regExp"];	
 				$field->TS=$TSAttributes;
 				$field->tempID=$i;
 				$field->fe_user=(string)getTSValue('feuser_map.'.$field->name,$obj->conf);
