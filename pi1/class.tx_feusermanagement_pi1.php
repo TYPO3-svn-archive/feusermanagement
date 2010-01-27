@@ -39,21 +39,34 @@ class tx_feusermanagement_pi1 extends tslib_pibase {
 	var $prefixId      = 'tx_feusermanagement_pi1';		// Same as class name
 	var $scriptRelPath = 'pi1/class.tx_feusermanagement_pi1.php';	// Path to this script relative to the extension dir.
 	var $extKey        = 'feusermanagement';	// The extension key.
-	var $errMsg="";
-	var $adminError="";
+	var $errMsg='';
+	var $adminError='';
 	var $uid;
 	var $pi_checkCHash = true;
 	var $modelLib=null;
 	var $viewLib=null;
-	var $userMailTemplate="";
-	var $adminMailTemplate="";
-	var $requiredMarker="";
-	var $templatefile="";
+	var $userMailTemplate='';
+	var $adminMailTemplate='';
+	var $requiredMarker='';
+	var $templatefile='';
 	var $requireUserConfirm=0;
 	var $requireAdminConfirm=0;
 	var $currStep=0;
 	var $baseURL='';
+	var $templateFileName='';
 	
+	function init() {
+		$this->baseURL=getTSValue('config.baseURL',$GLOBALS['TSFE']->tmpl->setup);
+		$this->requiredMarker=getTSValue('config.requiredMarker',$this->conf);
+		$this->modelLib=t3lib_div::makeInstance('registration_model');
+		$this->viewLib=t3lib_div::makeInstance('registration_view');
+		if (getTSValue('config.userConfirmation',$this->conf)) $this->requireUserConfirm=1;
+		if (getTSValue('config.adminConfirmation',$this->conf)) $this->requireAdminConfirm=1;
+		$this->templateFileName=getTSValue('config.template',$this->conf);
+		$this->templatefile = $this->cObj->fileResource($this->templateFileName);
+		$this->userMailTemplate=$this->cObj->getSubpart($this->templatefile,"USER_MAIL_CONFIRMATION");
+		$this->adminMailTemplate=$this->cObj->getSubpart($this->templatefile,"ADMIN_MAIL_USER_CONFIRMATION");
+	}
 	
 	function main($content,$conf)	{
 		global $TYPO3_CONF_VARS;
@@ -62,73 +75,51 @@ class tx_feusermanagement_pi1 extends tslib_pibase {
 		$this->pi_loadLL();
 		$this->pi_USER_INT_obj=1;
 		
-		$this->baseURL=getTSValue('config.baseURL',$GLOBALS['TSFE']->tmpl->setup);
+		$this->init();
+		
 		if (!$this->baseURL) return 'config.baseURL not set';
-		
-		$this->requiredMarker=getTSValue('config.requiredMarker',$conf);
-		$this->modelLib=t3lib_div::makeInstance('registration_model');
-		$this->viewLib=t3lib_div::makeInstance('registration_view');
-
-		$start_registration=false;
-		
-		if (getTSValue('config.userConfirmation',$this->conf)) $this->requireUserConfirm=1;
-		if (getTSValue('config.adminConfirmation',$this->conf)) $this->requireAdminConfirm=1;
-		#t3lib_div::debug(array(getTSValue('config.userConfirmation',$this->conf),getTSValue('config.adminConfirmation',$this->conf)));
-		#t3lib_div::debug($this->conf);
-		$checkInput=true;
-		
-		### Template ###
-		$templateFile=getTSValue('config.template',$conf);
-		if (!file_exists($templateFile)) {
-			return "Template File: '".$templateFile."' not found";
+		if (!file_exists($this->templateFileName)) {
+			return 'Template File: "'.$this->templateFileName.'" not found';
 		}
-
-		$templatef = $this->cObj->fileResource($templateFile);
-		$this->templatefile=$templatef;
-		
-		$this->userMailTemplate=$this->cObj->getSubpart($templatef,"USER_MAIL_CONFIRMATION");
-		$this->adminMailTemplate=$this->cObj->getSubpart($templatef,"ADMIN_MAIL_USER_CONFIRMATION");
+		$start_registration=false;
+		$checkInput=true;
 		
 		
 		### SPRUNG AUF VORGÄNGERSEITE? ###
-		if ($this->piVars['backlinkToStep']&&$GLOBALS["TSFE"]->fe_user->getKey("ses","ccm_reg_step")) { ###SESSION EXISTIERT, UND ER WILL ZURÜCK ###
+		if ($this->piVars['backlinkToStep']&&$GLOBALS["TSFE"]->fe_user->getKey('ses','ccm_reg_step')) { ###SESSION EXISTIERT, UND ER WILL ZURÜCK ###
 			$back=$this->piVars["backlinkToStep"];
-			$step=$GLOBALS["TSFE"]->fe_user->getKey("ses","ccm_reg_step");
+			$step=$GLOBALS["TSFE"]->fe_user->getKey('ses','ccm_reg_step');
 			$back=(int)$back;
 			if (($back>0) && ($back<$step)) {
-				$GLOBALS["TSFE"]->fe_user->setKey("ses","ccm_reg_step",$back);
+				$GLOBALS["TSFE"]->fe_user->setKey('ses','ccm_reg_step',$back);
 				$checkInput=false;
 			}
 		}
 		if ($this->piVars["userConfirmationToken"]) {
-			
 			$content=$this->renderMailConfirmation($this->piVars["userConfirmationToken"]);
 			return $this->pi_wrapInBaseClass($content);
 		}
 		if ($this->piVars["adminAction"]) {
-			
 			$content=$this->renderAdminConfirmation($this->piVars["adminAction"],$this->piVars["token"]);
 			return $this->pi_wrapInBaseClass($content);
 		}
-		if (!$GLOBALS["TSFE"]->fe_user->getKey("ses","ccm_reg_step")) { ### new registration ###
+		if (!$GLOBALS["TSFE"]->fe_user->getKey('ses','ccm_reg_step')) { ### new registration ###
 			$start_registration=true;
-			$GLOBALS["TSFE"]->fe_user->setKey("ses","ccm_reg_step",1);
+			$GLOBALS["TSFE"]->fe_user->setKey('ses','ccm_reg_step',1);
 		}
 		else {
 			### CHECK RECIEVED DATA ###
-			$step=$GLOBALS["TSFE"]->fe_user->getKey("ses","ccm_reg_step");
+			$step=$GLOBALS["TSFE"]->fe_user->getKey('ses','ccm_reg_step');
 			
 			$checkInput&=($this->piVars['ccm_regstep']==$step);
-			if (($checkInput)&&($this->validateInputLastStep($step))) {
-				
+			if (($checkInput)&&($this->validateInputLastStep($step))) {	
 				$this->writeLastStepToSession($uid,$step);
-				$GLOBALS["TSFE"]->fe_user->setKey("ses","ccm_reg_step",$step+1);
+				$GLOBALS["TSFE"]->fe_user->setKey('ses','ccm_reg_step',$step+1);
 			} else {
 				
 			}
-			
 		}
-		$step=$GLOBALS["TSFE"]->fe_user->getKey("ses","ccm_reg_step");
+		$step=$GLOBALS["TSFE"]->fe_user->getKey('ses','ccm_reg_step');
 		$this->currStep=$step;
 		### CHECK FOR REGISTRATION FINALIZED ###
 		$lastStep=$this->getLastStepNr();
@@ -139,9 +130,9 @@ class tx_feusermanagement_pi1 extends tslib_pibase {
 		
 		### GET TEMPLATES ###
 		
-		$template=$this->cObj->getSubpart($templatef,"STEP_".$step);
-		$errorTempl=$this->cObj->getSubpart($templatef,"ERROR_PART");
-		$finalTempl=$this->cObj->getSubpart($templatef,"FINAL_SCREEN");
+		$template=$this->cObj->getSubpart($this->templatefile,"STEP_".$step);
+		$errorTempl=$this->cObj->getSubpart($this->templatefile,"ERROR_PART");
+		$finalTempl=$this->cObj->getSubpart($this->templatefile,"FINAL_SCREEN");
 		$errorHTML=str_replace("###ERROR_MSG###",$this->errMsg,$errorTempl);
 		$fields=$this->modelLib->getCurrentFields($this->conf["steps."][$step."."],$this);
 		
@@ -186,8 +177,7 @@ class tx_feusermanagement_pi1 extends tslib_pibase {
 		
 		$markerArr["###SUBMIT###"]="<input type='submit' value='Absenden' />";
 		$markerArr["###STEP###"]=$step." / ".$lastStep;
-		
-		
+
 			###OLD VALUES###
 		$markerArr=$this->viewLib->fillMarkers($allFields,$markerArr,$this);
 		
@@ -218,7 +208,6 @@ class tx_feusermanagement_pi1 extends tslib_pibase {
 		if (!$final) {
 			$template=str_replace(array_keys($markerArr),$markerArr,$template);
 		} else {
-			
 			$template=str_replace(array_keys($markerArr),$markerArr,$finalTempl);
 			$this->userMailTemplate=str_replace(array_keys($markerArr),$markerArr,$this->userMailTemplate);
 			$this->adminMailTemplate=str_replace(array_keys($markerArr),$markerArr,$this->adminMailTemplate);
@@ -232,12 +221,10 @@ class tx_feusermanagement_pi1 extends tslib_pibase {
 			</script>
 		';
 		$GLOBALS['TSFE']->additionalHeaderData['feusermanagementjs']=$js;
-		
 		$content.=$template;
-		
 		if ($final) {
 		### SESSION LÖSCHEN ###
-			$GLOBALS["TSFE"]->fe_user->setKey("ses","ccm_reg_step","0");
+			$GLOBALS["TSFE"]->fe_user->setKey('ses','ccm_reg_step',"0");
 		}
 		return $this->pi_wrapInBaseClass($content);
 	}
@@ -251,7 +238,7 @@ class tx_feusermanagement_pi1 extends tslib_pibase {
 				$name=$field->name;
 				$id=$field->htmlID;
 				if (!(isset($this->piVars[$id]) && ($this->piVars[$id]))) {	
-					$valid=$GLOBALS["TSFE"]->fe_user->getKey("ses",$this->prefixId.$field->htmlId);
+					$valid=$GLOBALS["TSFE"]->fe_user->getKey('ses',$this->prefixId.$field->htmlId);
 					$this->errMsg=$this->prepareMessage(array($this->pi_getLL('not_enter','',FALSE),$field->label));
 				}
 				
@@ -337,7 +324,7 @@ class tx_feusermanagement_pi1 extends tslib_pibase {
 			$id=$field->htmlID;
 			if (isset($this->piVars[$id])) {
 				$value=$this->piVars[$id];
-				$GLOBALS["TSFE"]->fe_user->setKey("ses",$this->prefixId.$field->name,$value);
+				$GLOBALS["TSFE"]->fe_user->setKey('ses',$this->prefixId.$field->name,$value);
 				### HOOK afterValueInsert ###
 				if (is_array($GLOBALS['TYPO3_CONF_VARS']['EXTCONF'][$this->extKey]['afterValueInsert'])) {
 					foreach($GLOBALS['TYPO3_CONF_VARS']['EXTCONF'][$this->extKey]['afterValueInsert'] as $userFunc) {
@@ -353,7 +340,7 @@ class tx_feusermanagement_pi1 extends tslib_pibase {
 		}
 	}
 	function getValueFromSession($field) {
-		$sesVal=$GLOBALS["TSFE"]->fe_user->getKey("ses",$this->prefixId.$field->name);
+		$sesVal=$GLOBALS["TSFE"]->fe_user->getKey('ses',$this->prefixId.$field->name);
 		if ($sesVal) return $sesVal;
 		if ($field->value) return $field->value; //Wert der übers Typoscript übergeben wurde, für z.B. Hidden-Fields
 		return;
@@ -633,18 +620,18 @@ class tx_feusermanagement_pi1 extends tslib_pibase {
 		$res=$GLOBALS['TYPO3_DB']->sql_query($sql);
 		if (($row = $GLOBALS['TYPO3_DB']->sql_fetch_assoc($res)) && ($row['registration_token']==$token)) {
 			if ($action=='confirm') {
-				$pid=$this->conf["config."]["usersAdminConfirmedPid"];
-				$group=$this->conf["config."]["usersAdminConfirmedGroup"];
+				$pid=$this->conf['config.']['usersAdminConfirmedPid'];
+				$group=$this->conf['config.']['usersAdminConfirmedGroup'];
 				$sql='UPDATE fe_users SET disable=0,usergroup='.$group.',pid='.$pid.' WHERE uid='.$user;
 				$GLOBALS['TYPO3_DB']->sql_query($sql);
-				$content="User Confirmed";
+				$content='User Confirmed';
 			}
 			if ($action=='decline') {
 				$pid=getTSValue('config.usersAdminConfirmedPid',$this->conf);
 				$group=getTSValue('config.usersAdminConfirmedGroup',$this->conf);
 				$sql='UPDATE fe_users SET deleted=1,pid='.$pid.' WHERE uid='.$user;
 				$GLOBALS['TYPO3_DB']->sql_query($sql);
-				$content="User Deleted";
+				$content='User Deleted';
 			}
 		} else {
 			

@@ -42,6 +42,7 @@ plugin.tx_feusermanagement_pi1 {
 				type=password
 				label=LL_field_password
 				validation=password
+				onBlurValidation=1
 				tooltip=LL_field_password_tooltip
 			}
 			password2 {

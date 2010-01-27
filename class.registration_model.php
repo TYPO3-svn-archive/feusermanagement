@@ -38,7 +38,8 @@
 				
 				if (array_key_exists("additionalData",$TSAttributes)) $field->additionalData=$TSAttributes["additionalData"];
 				if (array_key_exists("validation",$TSAttributes)) $field->validation=$TSAttributes["validation"];
-				if (array_key_exists("jsvalidation",$TSAttributes)) $field->jsvalidation=$TSAttributes["validation"];
+				if (array_key_exists("jsvalidation",$TSAttributes)) $field->jsvalidation=$TSAttributes["jsvalidation"];
+				if (array_key_exists("onBlurValidation",$TSAttributes)) $field->onBlurValidation=$TSAttributes["onBlurValidation"];
 				if (array_key_exists("markerName",$TSAttributes)) $field->markerName=$TSAttributes["markerName"];	
 				if (array_key_exists("notCheckedMessage",$TSAttributes)) $field->notCheckedMessage=$TSAttributes["notCheckedMessage"];	
 				if (array_key_exists("value",$TSAttributes)) $field->value=$TSAttributes["value"];	

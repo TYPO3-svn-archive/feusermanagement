@@ -117,9 +117,9 @@ function '.$obj->prefixId.'_check_FormSubmit() {
 		return $formJS;
 	}
 	function getJS($field,$obj) {
-		$trueAction="";
-		$falseAction="";
-		
+		$trueAction='';
+		$falseAction='';
+		$js='';
 		if (is_array($GLOBALS['TYPO3_CONF_VARS']['EXTCONF'][$obj->extKey]['js_actions'])) {
 			foreach($GLOBALS['TYPO3_CONF_VARS']['EXTCONF'][$obj->extKey]['js_actions'] as $userFunc) {
 				
@@ -131,72 +131,72 @@ function '.$obj->prefixId.'_check_FormSubmit() {
 				$js=t3lib_div::callUserFunction($userFunc, $params, $obj);
 			}
 		}
-		switch ($field->onBlurValidation) {
-			case "email":
-				if (!($falseAction)) $falseAction="alert(".$obj->pi_getLL('email_error_value_js','',FALSE).");";
-				$reg=str_replace(chr(92),chr(92).chr(92),$this->emailReg);
-				$js='
-				function test'.$field->htmlID.'(src) {
-				     var regex = new RegExp("'.$reg.'");
-				     if (regex.test(src)) {
-						'.$trueAction.'
-					 } else if (src.length>0){
-						'.$falseAction.'
-					 }
-				  }
-				';
+		if ($field->onBlurValidation) {
+			switch ($field->validation) {
+				case "email":
+					if (!($falseAction)) $falseAction="alert(".$obj->pi_getLL('email_error_value_js','',FALSE).");";
+					$reg=str_replace(chr(92),chr(92).chr(92),$this->emailReg);
+					$js.='
+					function test'.$field->htmlID.'(value) {
+					     var regex = new RegExp("'.$reg.'");
+					     if (regex.test(value)) {
+							'.$trueAction.'
+						 } else if (value.length>0){
+							'.$falseAction.'
+						 }
+					  }
+					';
+					break;
+				case "password":
+					$reg=str_replace(chr(92),chr(92).chr(92),$this->passwordReg);
+					if (!($falseAction)) $falseAction="alert('".$obj->pi_getLL('password_error','',FALSE)."');";
+					$js.='
+					function test'.$field->htmlID.'(value) {
+					     var regex = new RegExp("'.$reg.'");
+					     if (regex.test(value)) {
+							'.$trueAction.'
+						 } else if (value.length>0){
+							'.$falseAction.'
+						 }
+					  }
+					';
+				
+					break;
+				case "regExp":
+					$reg=str_replace(chr(92),chr(92).chr(92),$field->regExp);
+					$js.='
+					function test'.$field->htmlID.'(value) {
+					     var regex = new RegExp("'.$reg.'");
+					     if (regex.test(value)) {
+							'.$trueAction.'
+						 } else {
+							'.$falseAction.'
+						 }
+					  }
+					';
+					break;
+				case "user":
+					$js=$field->onBlurCode;
+					break;
+				case "hook":
+					if (is_array($GLOBALS['TYPO3_CONF_VARS']['EXTCONF'][$obj->extKey]['fieldOnBlur'])) {
+						foreach($GLOBALS['TYPO3_CONF_VARS']['EXTCONF'][$obj->extKey]['fieldOnBlur'] as $userFunc) {
+							$params = array(
+								'field'=>$field,
+							);
+							$js.=t3lib_div::callUserFunction($userFunc, $params, $obj);
+						}
+					} 
+				
 				break;
-			case "password":
-				$reg=str_replace(chr(92),chr(92).chr(92),$this->passwordReg);
-				if (!($falseAction)) $falseAction="alert('".$obj->pi_getLL('password_error','',FALSE)."');";
-				$js='
-				function test'.$field->htmlID.'(src) {
-				     var regex = new RegExp("'.$reg.'");
-				     if (regex.test(src)) {
-						'.$trueAction.'
-					 } else if (src.length>0){
-						'.$falseAction.'
-					 }
-				  }
-				';
-			
-				break;
-			case "regExp":
-				$reg=str_replace(chr(92),chr(92).chr(92),$field->regExp);
-				$js='
-				function test'.$field->htmlID.'(src) {
-				     var regex = new RegExp("'.$reg.'");
-				     if (regex.test(src)) {
-						'.$trueAction.'
-					 } else {
-						'.$falseAction.'
-					 }
-				  }
-				';
-				break;
-			case "user":
-				$js=$field->onBlurCode;
-				break;
-			case "hook":
-				if (is_array($GLOBALS['TYPO3_CONF_VARS']['EXTCONF'][$obj->extKey]['fieldOnBlur'])) {
-					foreach($GLOBALS['TYPO3_CONF_VARS']['EXTCONF'][$obj->extKey]['fieldOnBlur'] as $userFunc) {
-						$params = array(
-							'field'=>$field,
-						);
-						$js=t3lib_div::callUserFunction($userFunc, $params, $obj);
-					}
-				} else {
-					$js="";
-				}
-			
-			break;
+			}
 		}
 		return $js;
 	}
 	function fillMarkers($allFields,$markerArr,$obj) {
 		foreach($allFields as $field) {
-			$temp="";
-			$onBlur="";
+			$temp='';
+			$onBlur='';
 			if (!$field->value) {
 				$field->value=$obj->getValueFromSession($field);
 			}
@@ -220,16 +220,16 @@ function '.$obj->prefixId.'_check_FormSubmit() {
 				case "dropdown":
 					$temp='<select name="'.$obj->prefixId.'['.$field->htmlID.']" id="'.$field->htmlID.'" title="'.$field->tooltip.'">';
 					foreach ($field->list as $arr) {
-						$x='<option value="'.$arr["value"].'">'.$obj->getString($arr["label"]).'</option>';
-						$temp.=$obj->cObj->stdWrap($x,$arr);
+						$temp.='<option value="'.$arr["value"].'">'.$obj->getString($arr["label"]).'</option>';
+						#$temp.=$obj->cObj->stdWrap($x,$arr);
 					}
 					$temp.='</select>';
 					break;
 				case "radio":
 					$temp="";
 					foreach ($field->list as $arr) {
-						$x='<input type="radio" name="'.$obj->prefixId.'['.$field->htmlID.']" id="'.$field->htmlID.'" value="'.$arr["value"].'"  />'.$obj->getString($arr["label"]);
-						$temp.=$obj->cObj->stdWrap($x,$arr);
+						$temp='<input type="radio" name="'.$obj->prefixId.'['.$field->htmlID.']" id="'.$field->htmlID.'" value="'.$arr["value"].'"  />'.$obj->getString($arr["label"]);
+						#$temp.=$obj->cObj->stdWrap($x,$arr);
 					}
 					break;
 				case "checkbox":
