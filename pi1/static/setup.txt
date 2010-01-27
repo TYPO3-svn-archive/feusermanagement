@@ -21,8 +21,8 @@ plugin.tx_feusermanagement_pi1 {
 		autologin=1
 		autologinRedirPid=1
 		formNoSubmitAction=alert(alertMessage);
-		
-		template=typo3conf/ext/feusermanagement/dummy_template.html
+		=
+		template=EXT:feusermanagement/dummy_template.html
 	}
 	stepjumps {
 		2=1
@@ -32,6 +32,8 @@ plugin.tx_feusermanagement_pi1 {
 		1.fields {
 			nickname {
 				required=1
+				onBlurValidation=1
+				jsvalidation=1
 				type=text
 				label=LL_field_nickname
 				tooltip=LL_field_nickname_tooltip

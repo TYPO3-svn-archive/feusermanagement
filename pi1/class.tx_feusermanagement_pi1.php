@@ -78,7 +78,7 @@ class tx_feusermanagement_pi1 extends tslib_pibase {
 		$this->init();
 		
 		if (!$this->baseURL) return 'config.baseURL not set';
-		if (!file_exists($this->templateFileName)) {
+		if (!$this->templatefile) {
 			return 'Template File: "'.$this->templateFileName.'" not found';
 		}
 		$start_registration=false;
