@@ -5,7 +5,7 @@ plugin.tx_feusermanagement_pi1 {
 		userMailSubject=New Registration
 		mailFromEMail=noreply@yourwebsite.com
 		mailFromName=noreply
-		useMD5=0
+		useMD5=1
 		requiredMarker=<sup><span style="color:#ff0000">*</span></sup>
 		
 		usersFreshPid=0
@@ -32,7 +32,6 @@ plugin.tx_feusermanagement_pi1 {
 		1.fields {
 			nickname {
 				required=1
-				toDB=1
 				type=text
 				label=LL_field_nickname
 				tooltip=LL_field_nickname_tooltip
@@ -40,7 +39,6 @@ plugin.tx_feusermanagement_pi1 {
 			}
 			password {
 				required=1
-				toDB=1
 				type=password
 				label=LL_field_password
 				validation=password
@@ -48,7 +46,6 @@ plugin.tx_feusermanagement_pi1 {
 			}
 			password2 {
 				required=1
-				toDB=1
 				type=password
 				label=LL_field_password2
 				tooltip=LL_field_password2_tooltip
@@ -58,7 +55,6 @@ plugin.tx_feusermanagement_pi1 {
 			}
 			email {
 				required=1
-				toDB=1
 				type=text
 				label=LL_field_email
 				tooltip=LL_field_email_tooltip
@@ -75,7 +71,6 @@ plugin.tx_feusermanagement_pi1 {
 		2.fields {
 			gender {
 				required=1
-				toDB=1
 				type=radio
 				options {
 					1.label=Mr.
@@ -84,6 +79,16 @@ plugin.tx_feusermanagement_pi1 {
 					2.value=female
 				}
 				label=Gender
+			}
+			blubb1 {
+				validation=requires
+				requires=blubb2
+				jsvalidation=1
+				type=text
+			}
+			blubb2 {
+				type=text
+				required=1
 			}
 		}
 	}

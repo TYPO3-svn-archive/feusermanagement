@@ -71,9 +71,10 @@ class tx_feusermanagement_pi1 extends tslib_pibase {
 
 		$start_registration=false;
 		
-		if ($this->conf["config."]["userConfirmation"]) $this->requireUserConfirm=1;
-		if ($this->conf["config."]["adminConfirmation"]) $this->requireAdminConfirm=1;
-		
+		if (getTSValue('config.userConfirmation',$this->conf)) $this->requireUserConfirm=1;
+		if (getTSValue('config.adminConfirmation',$this->conf)) $this->requireAdminConfirm=1;
+		#t3lib_div::debug(array(getTSValue('config.userConfirmation',$this->conf),getTSValue('config.adminConfirmation',$this->conf)));
+		#t3lib_div::debug($this->conf);
 		$checkInput=true;
 		
 		### Template ###
@@ -251,6 +252,7 @@ class tx_feusermanagement_pi1 extends tslib_pibase {
 				$id=$field->htmlID;
 				if (!(isset($this->piVars[$id]) && ($this->piVars[$id]))) {	
 					$valid=$GLOBALS["TSFE"]->fe_user->getKey("ses",$this->prefixId.$field->htmlId);
+					$this->errMsg=$this->prepareMessage(array($this->pi_getLL('not_enter','',FALSE),$field->label));
 				}
 				
 			}
@@ -269,7 +271,7 @@ class tx_feusermanagement_pi1 extends tslib_pibase {
 				}
 				if (!$unique) {
 					$valid=false;
-					$this->errMsg=$this->prepareMessage(array($this->pi_getLL('unique_error','',FALSE),$field->name));
+					$this->errMsg=$this->prepareMessage(array($this->pi_getLL('unique_error','',FALSE),$field->label));
 				}
 			}
 			
@@ -279,7 +281,7 @@ class tx_feusermanagement_pi1 extends tslib_pibase {
 				$id2=$fields[$ref]->htmlID;
 				if ($this->piVars[$id]!=$this->piVars[$id2]) {
 					$valid=false;
-					$this->errMsg=$this->prepareMessage(array($this->pi_getLL('equal_error','',FALSE),$field->name,$fields[$ref]->name));
+					$this->errMsg=$this->prepareMessage(array($this->pi_getLL('equal_error','',FALSE),$field->label,$fields[$ref]->label));
 				}
 			}
 			if ($field->validation) {
@@ -366,7 +368,13 @@ class tx_feusermanagement_pi1 extends tslib_pibase {
 			if ($field->fe_user) {
 				$map[$field->fe_user]=mysql_real_escape_string($this->getValueFromSession($field));
 			}
+			if ($field->fe_user=='password') {
+				if (getTSValue('config.useMD5',$this->conf)) {
+					$map[$field->fe_user]=md5($map[$field->fe_user]);
+				}
+			}
 		}
+		
 		$token=md5(rand());
 		$map['registration_token']=$token;
 		$keys=implode(",",array_keys($map));
@@ -403,7 +411,7 @@ class tx_feusermanagement_pi1 extends tslib_pibase {
 				t3lib_div::callUserFunction($userFunc, $params, $this);
 			}
 		}
-		
+		#t3lib_div::debug(array($this->requireUserConfirm,$this->requireAdminConfirm,$disabled));
 		if (!$disabled) {
 			if (getTSValue('config.autologin',$this->conf)) {
 				$loginData = array( 'uname' => $map['username'], 'uident'=> $map['password'], 'status' =>'login' ); 
@@ -417,7 +425,7 @@ class tx_feusermanagement_pi1 extends tslib_pibase {
 					$GLOBALS['TSFE']->fe_user->start(); 
 				}
 				if ($redirPid=getTSValue('config.autologinRedirPid',$this->conf)) {
-					t3lib_div::debug('Location: '.$this->baseURL.$this->cObj->getTypoLink_URL($redirPid));
+					#t3lib_div::debug('Location: '.$this->baseURL.$this->cObj->getTypoLink_URL($redirPid));
 					header('Location: '.$this->baseURL.$this->cObj->getTypoLink_URL($redirPid));
 				}
 			}
