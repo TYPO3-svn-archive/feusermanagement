@@ -130,11 +130,11 @@ class tx_feusermanagement_pi1 extends tslib_pibase {
 		
 		### GET TEMPLATES ###
 		
-		$template=$this->cObj->getSubpart($this->templatefile,"STEP_".$step);
-		$errorTempl=$this->cObj->getSubpart($this->templatefile,"ERROR_PART");
-		$finalTempl=$this->cObj->getSubpart($this->templatefile,"FINAL_SCREEN");
-		$errorHTML=str_replace("###ERROR_MSG###",$this->errMsg,$errorTempl);
-		$fields=$this->modelLib->getCurrentFields($this->conf["steps."][$step."."],$this);
+		$template=$this->cObj->getSubpart($this->templatefile,'###STEP_'.$step.'###');
+		$errorTempl=$this->cObj->getSubpart($this->templatefile,'###ERROR_PART###');
+		$finalTempl=$this->cObj->getSubpart($this->templatefile,'###FINAL_SCREEN###');
+		$errorHTML=str_replace('###ERROR_MSG###',$this->errMsg,$errorTempl);
+		$fields=$this->modelLib->getCurrentFields($this->conf['steps.'][$step.'.'],$this);
 		
 			### HOOK processFields ###
 		if (is_array($GLOBALS['TYPO3_CONF_VARS']['EXTCONF'][$this->extKey]['processFields'])) {
