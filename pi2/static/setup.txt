@@ -1,0 +1,3 @@
+plugin.tx_feusermanagement_pi2.config < plugin.tx_feusermanagement_pi1.config
+plugin.tx_feusermanagement_pi2.steps < plugin.tx_feusermanagement_pi1.steps
+plugin.tx_feusermanagement_pi2.feuser_map < plugin.tx_feusermanagement_pi1.feuser_map
