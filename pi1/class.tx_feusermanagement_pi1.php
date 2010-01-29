@@ -455,8 +455,8 @@ class tx_feusermanagement_pi1 extends tslib_pibase {
 			$markerArr['###FE_'.strtoupper($key).'###']=$value;
 		}
 		$adminToken=$row_feuser['registration_token'];#md5($TYPO3_CONF_VARS['SYS']['encryptionKey'].$row['registration_token']);
-		$confirmLink=$this->pi_getPageLink($GLOBALS['TSFE']->id,$target='',$urlParameters=array($this->prefixId.'[adminAction]'=>'confirm',$this->prefixId.'[token]'=>md5($adminToken),$this->prefixId.'[fe_user]'=>$row_feuser['uid']));
-		$declineLink=$this->pi_getPageLink($GLOBALS['TSFE']->id,$target='',$urlParameters=array($this->prefixId.'[adminAction]'=>'decline',$this->prefixId.'[token]'=>md5($adminToken),$this->prefixId.'[fe_user]'=>$row_feuser['uid']));
+		$confirmLink=$this->baseURL.$this->pi_getPageLink($GLOBALS['TSFE']->id,$target='',$urlParameters=array($this->prefixId.'[adminAction]'=>'confirm',$this->prefixId.'[token]'=>md5($adminToken),$this->prefixId.'[fe_user]'=>$row_feuser['uid']));
+		$declineLink=$this->baseURL.$this->pi_getPageLink($GLOBALS['TSFE']->id,$target='',$urlParameters=array($this->prefixId.'[adminAction]'=>'decline',$this->prefixId.'[token]'=>md5($adminToken),$this->prefixId.'[fe_user]'=>$row_feuser['uid']));
 		$markerArr["###ADMIN_ACCEPT###"]=$confirmLink;
 		$markerArr["###ADMIN_DECLINE###"]=$declineLink;
 		$disabled=0;
@@ -618,7 +618,7 @@ class tx_feusermanagement_pi1 extends tslib_pibase {
 		
 		
 		$res=$GLOBALS['TYPO3_DB']->sql_query($sql);
-		if (($row = $GLOBALS['TYPO3_DB']->sql_fetch_assoc($res)) && ($row['registration_token']==$token)) {
+		if (($row = $GLOBALS['TYPO3_DB']->sql_fetch_assoc($res)) && (md5($row['registration_token'])==$token)) {
 			if ($action=='confirm') {
 				$pid=$this->conf['config.']['usersAdminConfirmedPid'];
 				$group=$this->conf['config.']['usersAdminConfirmedGroup'];

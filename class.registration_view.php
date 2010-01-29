@@ -259,7 +259,7 @@ function '.$obj->prefixId.'_check_FormSubmit() {
 		}
 		$markerArr["###GENERAL_REQUIRED###"]=$obj->requiredMarker;
 		$markerArr["###FORM_BEGIN###"]="<form name='".$obj->prefixId."reg_form' action='".$obj->baseURL.$obj->cObj->getTypoLink_URL($GLOBALS['TSFE']->id)."' method='POST' onSubmit='return ".$obj->prefixId."_check_FormSubmit();'>";
-		$markerArr["###FORM_BEGIN###"]="<form name='".$obj->prefixId."reg_form' action='".$obj->baseURL"index.php?id=".$GLOBALS['TSFE']->id."' method='POST' onSubmit='return ".$obj->prefixId."_check_FormSubmit();'>";
+		$markerArr["###FORM_BEGIN###"]="<form name='".$obj->prefixId."reg_form' action='".$obj->baseURL."index.php?id=".$GLOBALS['TSFE']->id."' method='POST' onSubmit='return ".$obj->prefixId."_check_FormSubmit();'>";
 		$markerArr["###FORM_END###"]='<input type="hidden" name="'.$obj->prefixId.'[ccm_regstep]" value="'.$obj->currStep.'"></form>';
 		return $markerArr;
 	}
