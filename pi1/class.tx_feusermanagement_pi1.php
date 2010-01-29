@@ -113,7 +113,7 @@ class tx_feusermanagement_pi1 extends tslib_pibase {
 			
 			$checkInput&=($this->piVars['ccm_regstep']==$step);
 			if (($checkInput)&&($this->validateInputLastStep($step))) {	
-				$this->writeLastStepToSession($uid,$step);
+				$this->writeLastStepToSession($step);
 				$GLOBALS["TSFE"]->fe_user->setKey('ses','ccm_reg_step',$step+1);
 			} else {
 				
@@ -136,11 +136,10 @@ class tx_feusermanagement_pi1 extends tslib_pibase {
 		$errorHTML=str_replace('###ERROR_MSG###',$this->errMsg,$errorTempl);
 		$fields=$this->modelLib->getCurrentFields($this->conf['steps.'][$step.'.'],$this);
 		
-			### HOOK processFields ###
+		### HOOK processFields ###
 		if (is_array($GLOBALS['TYPO3_CONF_VARS']['EXTCONF'][$this->extKey]['processFields'])) {
 			foreach($GLOBALS['TYPO3_CONF_VARS']['EXTCONF'][$this->extKey]['processFields'] as $userFunc) {
 				$params = array(
-					'uid' => $this->uid,
 					'fields' => &$fields,
 					'step' =>$step,
 				);
@@ -275,8 +274,6 @@ class tx_feusermanagement_pi1 extends tslib_pibase {
 				switch ($field->validation) {
 					case "email":
 						$pattern = '/'.$this->viewLib->emailReg.'/';
-
-						
 						if (!preg_match($pattern,$this->piVars[$field->htmlID])) {
 							
 							$valid=false;
@@ -316,7 +313,7 @@ class tx_feusermanagement_pi1 extends tslib_pibase {
 		return $valid;
 	}
 	
-	function writeLastStepToSession($uid,$step) {
+	function writeLastStepToSession($step) {
 		$fields=$this->modelLib->getCurrentFields($this->conf['steps.'][$step.'.'],$this);
 		foreach($fields as $field) {
 			
@@ -365,9 +362,8 @@ class tx_feusermanagement_pi1 extends tslib_pibase {
 		$token=md5(rand());
 		$map['registration_token']=$token;
 		$keys=implode(",",array_keys($map));
-		if (strlen($keys)>0) $keys=",".$keys;
 		$values=implode("','",$map);
-		if (strlen($values)>0) $values=",'".$values."'";
+		
 
 		
 		$pid=getTSValue('config.usersFreshPid',$this->conf);

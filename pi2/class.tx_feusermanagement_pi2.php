@@ -40,9 +40,14 @@ class tx_feusermanagement_pi2 extends tslib_pibase {
 	var $scriptRelPath = 'pi2/class.tx_feusermanagement_pi2.php';	// Path to this script relative to the extension dir.
 	var $extKey        = 'feusermanagement';	// The extension key.
 	var $pi_checkCHash = true;
-	var $fe_uid="";
+	var $feuser_uid='';
 	var $baseURL='';
 	var $requiredMarker='';
+	var $modelLib=null;
+	var $viewLib=null;
+	var $templateFileName='';
+	var $templatefile='';
+	var $step=0;
 	/**
 	 * The main method of the PlugIn
 	 *
@@ -50,6 +55,18 @@ class tx_feusermanagement_pi2 extends tslib_pibase {
 	 * @param	array		$conf: The PlugIn configuration
 	 * @return	The content that is displayed on the website
 	 */
+	
+	function init() {
+		$this->baseURL=getTSValue('config.baseURL',$GLOBALS['TSFE']->tmpl->setup);
+		$this->requiredMarker=getTSValue('config.requiredMarker',$this->conf);
+		$this->modelLib=t3lib_div::makeInstance('registration_model');
+		$this->viewLib=t3lib_div::makeInstance('registration_view');
+		$this->feuser_uid=$GLOBALS['TSFE']->fe_user->user['uid'];
+		
+		$this->templateFileName=getTSValue('config.template',$this->conf);
+		$this->templatefile = $this->cObj->fileResource($this->templateFileName);
+	}
+	
 	function main($content,$conf)	{
 		
 		$this->conf=$conf;
@@ -57,18 +74,12 @@ class tx_feusermanagement_pi2 extends tslib_pibase {
 		$this->pi_loadLL();
 		$this->pi_USER_INT_obj=1;
 		
-		$this->baseURL=getTSValue('config.baseURL',$GLOBALS['TSFE']->tmpl->setup);
+		$this->init();
+		
 		if (!$this->baseURL) return 'config.baseURL not set';
-		
-		$this->requiredMarker=getTSValue('config.requiredMarker',$this->conf);
-		$this->modelLib=t3lib_div::makeInstance('registration_model');
-		$this->viewLib=t3lib_div::makeInstance('registration_view');
-		
 		$checkInput=true;
 		
-		$fe_uid=$GLOBALS['TSFE']->fe_user->user['uid'];
-		$this->fe_uid=$fe_uid;
-		if (!$fe_uid) {
+		if (!$this->feuser_uid) {
 			return 'No user is logged in';
 		}
 		
@@ -113,27 +124,35 @@ class tx_feusermanagement_pi2 extends tslib_pibase {
 		$final=false;
 
 		if ($step>$lastStep) {
-			$final=true;
-			
+			$final=true;			
 		}
+		$this->step=$step;
 		### GET TEMPLATES ###
-		$template=$this->cObj->getSubpart($templatef,"STEP_".$step);
-		$errorTempl=$this->cObj->getSubpart($templatef,"ERROR_PART");
-		$finalTempl=$this->cObj->getSubpart($templatef,"FINAL_SCREEN");
-		$deleteTempl=$this->cObj->getSubpart($templatef,"DELETED");
+		$template=$this->cObj->getSubpart($this->templatef,"STEP_".$step);
+		$errorTempl=$this->cObj->getSubpart($this->templatef,"ERROR_PART");
+		$finalTempl=$this->cObj->getSubpart($this->templatef,"FINAL_SCREEN");
+		$deleteTempl=$this->cObj->getSubpart($this->templatef,"DELETED");
 		$errorHTML=str_replace("ERROR_MSG",$this->errMsg,$errorTempl);
 		$fields=$this->modelLib->getCurrentFields($this->conf["steps."][$step."."],$this);
 		
+		### HOOK processFields ###
+		if (is_array($GLOBALS['TYPO3_CONF_VARS']['EXTCONF'][$this->extKey]['processFields_pi2'])) {
+			foreach($GLOBALS['TYPO3_CONF_VARS']['EXTCONF'][$this->extKey]['processFields_pi2'] as $userFunc) {
+				$params = array(
+					'fields' => &$fields,
+					'step' =>$step,
+				);
+				t3lib_div::callUserFunction($userFunc, $params, $this);
+			}
+		}
 		
 		if ($this->piVars['deleteAccount']) {
-			
 			if (is_array($GLOBALS['TYPO3_CONF_VARS']['EXTCONF'][$this->extKey]['preDeleteAccount'])) {
 				foreach($GLOBALS['TYPO3_CONF_VARS']['EXTCONF'][$this->extKey]['preDeleteAccount'] as $userFunc) {
 					$params = array(
-						'uid'=>$this->fe_uid
+						'uid'=>$this->feuser_uid
 					);
 					t3lib_div::callUserFunction($userFunc, $params, $this);
-
 				}
 			}
 			
@@ -270,85 +289,48 @@ class tx_feusermanagement_pi2 extends tslib_pibase {
 		
 		$fields=$this->modelLib->getCurrentFields($this->conf["steps."][$step."."],$this);
 		foreach($fields as $field) {
-			if ($field->toDB) {
-				$name=$field->dbName;
-				$id=$field->htmlID;
-				if (isset($_POST[$id])) {
-					$value=$_POST[$id];
-					
-					$sql="DELETE FROM tx_feregistrationprocess_user_info WHERE feuser_uid='".$this->fe_uid."' AND type='$name'";
-					$GLOBALS['TYPO3_DB']->sql_query($sql);
-					$sql="INSERT INTO tx_feregistrationprocess_user_info (type,content,feuser_uid,istemp) VALUES('".$name."','".$value."','".$this->fe_uid."','0')";
-					
-					$GLOBALS['TYPO3_DB']->sql_query($sql);
-					### HOOK afterValueInsert ###
-					if (is_array($GLOBALS['TYPO3_CONF_VARS']['EXTCONF'][$this->extKey]['afterValueInsert'])) {
-						foreach($GLOBALS['TYPO3_CONF_VARS']['EXTCONF'][$this->extKey]['afterValueInsert'] as $userFunc) {
-							$params = array(
-								'fe_uid' => $this->fe_uid,
-								'field' => $field,
-								'value'=>$value,
-							);
-							t3lib_div::callUserFunction($userFunc, $params, $this);
-						}
+			
+			$name=$field->dbName;
+			$id=$field->htmlID;
+			if (isset($this->piVars[$id])) {
+				$value=$this->piVars[$id];
+				$GLOBALS["TSFE"]->fe_user->setKey('ses',$this->prefixId.$field->name,$value);		
+				### HOOK afterValueInsert ###
+				if (is_array($GLOBALS['TYPO3_CONF_VARS']['EXTCONF'][$this->extKey]['afterValueInsert_pi2'])) {
+					foreach($GLOBALS['TYPO3_CONF_VARS']['EXTCONF'][$this->extKey]['afterValueInsert_pi2'] as $userFunc) {
+						$params = array(
+							'field' => $field,
+							'value'=>$value,
+						);
+						t3lib_div::callUserFunction($userFunc, $params, $this);
 					}
 				}
 			}
+		
 		}
 	}
 	function updateFEUser() {
 		$allFields=$this->modelLib->getAllFields($this);
-		$updateStr="";
-		if (is_array($this->conf["feuser_map."])) {
-			foreach($this->conf["feuser_map."] as $key=>$value) {
-				$show=0;
-				if ($key=="tx_personalheader_apo_id") $show=1;
-				//if ($show) t3lib_div::debug(array($key,$value,$this->getValueFromDB($allFields[$value])));
-				$field=$allFields[$value];
-				if ($field->type=='password') {
-					//t3lib_div::debug(array('a'));
-					$val=$this->getValueFromDB($allFields[$value]);
-					$id=$field->htmlID;
-					//t3lib_div::debug(array($id,$_POST[$id]));
-					if ($_POST[$id]) {
-						//Passwortfeld, und Passwort neu gesetzt
-						$val=encryptPW($_POST[$id],$this);
-						if (strlen($updateStr)>0) $updateStr.=", ";
-						$updateStr.= $key."='".$val."'";
-						//t3lib_div::debug(array('b'));
-					} elseif ($val) {
-						//t3lib_div::debug(array('c'));
-						//Passwortfeld, und Passwort nicht gesetzt => altes aus der DB
-						/*
-						if (strlen($updateStr)>0) $updateStr.=", ";
-						$val=encryptPW($map[$key],$this);
-						$updateStr.= $key."='".$val."'";
-						*/
-					}
-					
-					
-				} else {
-					if (strlen($updateStr)>0) $updateStr.=", ";
-					if ($field->type=='checkbox') {
-						if ($_POST[$field->htmlID]) {
-							$updateStr.=$key."='1'";
-						} else {
-							$updateStr.=$key."='0'";
-						}
-					} else {
-						if ($_POST[$field->htmlID]) {
-							$updateStr.=$key."='".$_POST[$field->htmlID]."'";
-						}
-						else $updateStr.= $key."='".$this->getValueFromDB($allFields[$value])."'";
-					}
-					
-					
+		
+		$map=array();
+		
+		foreach($allFields as $field) {
+			if ($field->fe_user) {
+				$map[$field->fe_user]=mysql_real_escape_string($this->getValueFromSession($field));
+			}
+			if ($field->fe_user=='password') {
+				if (getTSValue('config.useMD5',$this->conf)) {
+					$map[$field->fe_user]=md5($map[$field->fe_user]);
 				}
 			}
 		}
 		
-		$sql="UPDATE fe_users SET ".$updateStr." WHERE uid='".$this->fe_uid."'";
+		foreach ($map as $key=>$value) {
+			$updateStr.=(strlen($updateStr))?',':'';
+			$updateStr.=$key.'="'.mysql_real_escape_string($value).'"';
+		}
 		
+		$sql="UPDATE fe_users SET ".$updateStr." WHERE uid='".$this->feuser_uid."'";
 		$GLOBALS['TYPO3_DB']->sql_query($sql);
 	}
 	
@@ -388,35 +370,14 @@ class tx_feusermanagement_pi2 extends tslib_pibase {
 		}
 		return $text;
 	}
-	function getValueFromDB($field) {
-		$fe_uid=$this->fe_uid;
-		if (!($field->toDB)) return "";
+	function getValueFromSession($field) {
+		$sesVal=$GLOBALS["TSFE"]->fe_user->getKey('ses',$this->prefixId.$field->name);
+		if ($sesVal) return $sesVal;
+		if ($field->value) return $field->value; //Wert der übers Typoscript übergeben wurde, für z.B. Hidden-Fields
 		
-		/*
-		$returnVal="";
-		$sql="SELECT content FROM tx_feregistrationprocess_user_info WHERE feuser_uid='".$fe_uid."' AND type='".$field->dbName."'";
-		if ($res = $GLOBALS['TYPO3_DB']->sql_query($sql)) {
-			if ($row=$GLOBALS['TYPO3_DB']->sql_fetch_assoc($res)) {
-				$returnVal=$row["content"];
-			}
-		}*/
-		//t3lib_div::debug(array($sql,$returnVal));
-		if (true) {
-			$fe_name=$this->get_fe_fieldname($field);
-			if ($fe_name) {
-				$sql='SELECT '.$fe_name.' FROM fe_users WHERE uid="'.$fe_uid.'"';
-				
-				$res = $GLOBALS['TYPO3_DB']->sql_query($sql);
-				if ($row=$GLOBALS['TYPO3_DB']->sql_fetch_assoc($res)) {
-					$returnVal=$row[$fe_name];
-				}
-				//t3lib_div::debug(array($sql,$returnVal));
-			}
-			
-		}
-		//t3lib_div::debug(array($sql,$returnVal));
-		//t3lib_div::debug(array($field->name,$returnVal,$sql));
-		return $returnVal;
+		// TODO: Aus der fe_user tablle wert auslesen
+		
+		return '';
 	}
 	function getBacklinks($step) {
 		$steps=array();
@@ -503,54 +464,49 @@ class tx_feusermanagement_pi2 extends tslib_pibase {
 			
 			if ($field->unique) {
 				$id=$field->htmlID;
-				$value=$_POST[$id];
-				$sql="SELECT * FROM tx_feregistrationprocess_user_info WHERE type='".$field->dbName."' AND content='".$value."'";
+				$value=mysql_real_escape_string($this->piVars[$id]);
+				$sql='SELECT * FROM fe_users WHERE '.$field->fe_user.'="'.$value.'" AND NOT uid="'.$this->feuser_uid.'"';
 				$res=$GLOBALS['TYPO3_DB']->sql_query($sql);
 				$unique=true;
 				while ($row=$GLOBALS['TYPO3_DB']->sql_fetch_assoc($res)) {
-					if ($row["id"]!=$this->uid) $unique=false;
+					$unique=false;
 				}
 				if (!$unique) {
 					$valid=false;
-					$this->errMsg=$this->prepareMessage(array($this->pi_getLL('unique_error','',FALSE),$field->name));
+					$this->errMsg=$this->prepareMessage(array($this->pi_getLL('unique_error','',FALSE),$field->label));
 				}
 			}
 			if ($field->equal) {
 				$ref=$field->equal;
 				$id=$field->htmlID;
 				$id2=$fields[$ref]->htmlID;
-				if ($_POST[$id]!=$_POST[$id2]) {
+				if ($this->piVars[$id]!=$this->piVars[$id2]) {
 					$valid=false;
 					$this->errMsg=$this->prepareMessage(array($this->pi_getLL('equal_error','',FALSE),$field->name,$fields[$ref]->name));
 				}
 			}
 			if ($field->onBlurValidation) {
-				switch ($field->onBlurValidation) {
+				switch ($field->validation) {
 					case "email":
-						$pattern = "^[_a-z0-9-]+(\.[_a-z0-9-]+)*@[a-z0-9-]+(\.[a-z0-9-]+)*(\.[a-z]{2,3})$";
-						
-						//$pattern="^[\\\\w-_\\.+]*[\\\\w-_\\.]\@([\\\\w]+\\\\.)+[\\\\w]+[\\\\w]$";
-						
-						if (!eregi($pattern,$_POST[$field->htmlID])) {
+						$pattern = '/'.$this->viewLib->emailReg.'/';
+						if (!preg_match($pattern,$this->piVars[$field->htmlID])) {
+							
 							$valid=false;
 							$this->errMsg=$this->pi_getLL('email_error','',FALSE);
 						}
 						break;
-					case "//password":
-						$pattern="/^.*(?=.{6,})(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).*$/";
-						//$pattern=preg_quote($pattern);
-						//$pattern="^[a-zA-Z0-9]{8,12}$";
-						//t3lib_div::debug(array($pattern,$_POST[$field->htmlID]));
-						
-						if (!preg_match($pattern,$_POST[$field->htmlID])) {
+					case "password":
+						$pattern='/'.$this->viewLib->passwordReg.'/';
+												
+						if (!preg_match($pattern,$this->piVars[$field->htmlID])) {
 							$valid=false;
 							$this->errMsg=$this->pi_getLL('password_error','',FALSE);
 						}
 						break;
 					case "regExp":
 						
-						$pattern = "";
-						if (!eregi($pattern,$_POST[$field->htmlID])) {
+						$pattern = '/'.$field->regExp.'/';
+						if (!preg_match($pattern,$this->piVars[$field->htmlID])) {
 							$valid=false;
 							$this->errMsg=$this->prepareMessage(array(pi_getLL('pattern_error','',FALSE),$field->label));
 						}
