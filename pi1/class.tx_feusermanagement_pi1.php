@@ -174,7 +174,7 @@ class tx_feusermanagement_pi1 extends tslib_pibase {
 		$htmlFields=array();
 		$allFields=$this->modelLib->getAllFields($this);
 		
-		$markerArr["###SUBMIT###"]="<input type='submit' value='Absenden' />";
+		$markerArr["###SUBMIT###"]='<input type="submit" value="'.$this->pi_getLL('submit_label','',FALSE).'" />';
 		$markerArr["###STEP###"]=$step." / ".$lastStep;
 
 			###OLD VALUES###
