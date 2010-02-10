@@ -213,10 +213,9 @@ class tx_feusermanagement_pi2 extends tslib_pibase {
 		$htmlFields=array();
 		$allFields=$this->modelLib->getAllFields($this);
 		
-		$markerArr["###SUBMIT###"]="<input type='submit' value='Absenden' />";
+		$markerArr["###SUBMIT###"]='<input type="submit" value="'.$this->pi_getLL('submit_label','',FALSE).'" />';
 		$markerArr["###STEP###"]=$step." / ".$lastStep;
-		$markerArr["###FORM_BEGIN###"]="<form name='ccm_reg_form' action='".$this->pi_linkTP_keepPIvars_url()."' method='POST' onSubmit='return ccm_check_FormSubmit();'>";
-		$markerArr["###FORM_END###"]="</form>";
+		
 		$markerArr['###DELETE_URL###']=$this->cObj->typoLink_URL(array('parameter'=>$GLOBALS['TSFE']->id,'useCacheHash'=>true,'additionalParams'=>'&deleteAccount=1&tstamp='.time()));
 			###OLD VALUES###
 		$markerArr=$this->viewLib->fillMarkers($allFields,$markerArr,$this);
