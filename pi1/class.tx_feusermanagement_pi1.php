@@ -245,15 +245,23 @@ class tx_feusermanagement_pi1 extends tslib_pibase {
 			
 			if ($field->unique) {
 				$id=$field->htmlID;
-				
 				$value=mysql_real_escape_string($this->piVars[$id]);
 				
-				$sql='SELECT * FROM fe_users WHERE '.$field->fe_user.'="'.$value.'"';
-				
-				$res=$GLOBALS['TYPO3_DB']->sql_query($sql);
+				$maparr=getTSValue('feuser_map',$this->conf);
+				$uniqueDBFields=array();
+				foreach($maparr as $fe_name=>$field_name) {
+					if ($field_name==$field->name) {
+						$uniqueDBFields[]=$fe_name;
+					}
+				}
 				$unique=true;
-				while ($row=$GLOBALS['TYPO3_DB']->sql_fetch_assoc($res)) {
-					$unique=false;
+				foreach ($uniqueDBFields as $db_name) {
+					$sql='SELECT * FROM fe_users WHERE '.$db_name.'="'.$value.'"';
+					$res=$GLOBALS['TYPO3_DB']->sql_query($sql);
+					
+					while ($row=$GLOBALS['TYPO3_DB']->sql_fetch_assoc($res)) {
+						$unique=false;
+					}
 				}
 				if (!$unique) {
 					$valid=false;
@@ -348,22 +356,45 @@ class tx_feusermanagement_pi1 extends tslib_pibase {
 		$allFields=$this->modelLib->getAllFields($this);
 		$map=array();
 		
+		$maparr=getTSValue('feuser_map',$this->conf);
+		foreach($maparr as $fe_name=>$field_name) {
+			$map[$fe_name]=mysql_real_escape_string($this->getValueFromSession($allFields[$field_name]));
+			if ($fe_name=='password') {
+				if (getTSValue('config.useMD5',$this->conf)) {
+					$map['password']=md5($map['password']);
+				}
+			}
+		}
+	
+		/*
 		foreach($allFields as $field) {
 			if ($field->fe_user) {
 				$map[$field->fe_user]=mysql_real_escape_string($this->getValueFromSession($field));
 			}
 			if ($field->fe_user=='password') {
 				if (getTSValue('config.useMD5',$this->conf)) {
+					$clearTextPwd=$map[$field->fe_user];
 					$map[$field->fe_user]=md5($map[$field->fe_user]);
 				}
 			}
+		}
+		*/
+		if (getTSValue('config.autogenPwd',$this->conf)) {
+			$pwd=rand(100000,999999);
+			$clearTextPwd=$pwd;
+			$GLOBALS["TSFE"]->fe_user->setKey('ses',$this->prefixId.'password',$clearTextPwd);
+			if (getTSValue('config.useMD5',$this->conf)) {
+				$pwd=md5($pwd);
+			}
+			$map['password']=$pwd;
 		}
 		
 		$token=md5(rand());
 		$map['registration_token']=$token;
 		$keys=implode(",",array_keys($map));
+		if ($keys) $keys=','.$keys;
 		$values=implode("','",$map);
-		
+		if ($values) $values=",'".$values."'";
 
 		
 		$pid=getTSValue('config.usersFreshPid',$this->conf);
@@ -398,6 +429,7 @@ class tx_feusermanagement_pi1 extends tslib_pibase {
 		if (!$disabled) {
 			if (getTSValue('config.autologin',$this->conf)) {
 				$loginData = array( 'uname' => $map['username'], 'uident'=> $map['password'], 'status' =>'login' ); 
+				
 				$GLOBALS['TSFE']->fe_user->checkPid=0; 
 				$info = $GLOBALS['TSFE']->fe_user->getAuthInfoArray(); 
 				$user = $GLOBALS['TSFE']->fe_user->fetchUserRecord($info['db_user'],$loginData['uname']); 
@@ -408,7 +440,7 @@ class tx_feusermanagement_pi1 extends tslib_pibase {
 					$GLOBALS['TSFE']->fe_user->start(); 
 				}
 				if ($redirPid=getTSValue('config.autologinRedirPid',$this->conf)) {
-					#t3lib_div::debug('Location: '.$this->baseURL.$this->cObj->getTypoLink_URL($redirPid));
+					
 					header('Location: '.$this->baseURL.$this->cObj->getTypoLink_URL($redirPid));
 				}
 			}

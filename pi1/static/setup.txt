@@ -21,7 +21,7 @@ plugin.tx_feusermanagement_pi1 {
 		autologin=1
 		autologinRedirPid=1
 		formNoSubmitAction=alert(alertMessage);
-		=
+		
 		template=EXT:feusermanagement/dummy_template.html
 	}
 	stepjumps {

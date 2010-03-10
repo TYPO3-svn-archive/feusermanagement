@@ -16,17 +16,33 @@
 				$field->label=$name;
 				$field->markerName=strtoupper($name);
 				$field->tooltip=$name;
+				$field->list=array();
 				$field->errField="ccm_reg_err_".$name;
 				$field->htmlID="ccm_reg_elem".$name;
 				if (array_key_exists("type",$TSAttributes)) $field->type=$TSAttributes["type"];
 				if ($field->type=="dropdown"||$field->type=="radio") {
-					if (array_key_exists("options.",$TSAttributes)&&is_array($TSAttributes["options."])) $TSOptions=$TSAttributes["options."];
-					foreach($TSOptions as $key=>$TSoption) {
+					if (array_key_exists("options.",$TSAttributes)&&is_array($TSAttributes["options."])) {
+						$TSOptions=$TSAttributes["options."];
+						foreach($TSOptions as $key=>$TSoption) {
+							
+							if (is_array($TSoption)) {
+								if (array_key_exists("label",$TSoption)&&array_key_exists("value",$TSoption)) {
+									$field->list[]=$TSoption;
+								}	
+							}
+						}
 						
-						if (is_array($TSoption)) {
-							if (array_key_exists("label",$TSoption)&&array_key_exists("value",$TSoption)) {
-								$field->list[]=$TSoption;
-							}	
+					}
+					if (!count($field->list)) {
+						if ($TSRelation=$TSAttributes['relation.']) {					
+							if (($table=$TSRelation['table']) && ($valueField=$TSRelation['value_field']) && ($labelField=$TSRelation['label_field'])) {
+								if ($where=$TSRelation['where']) $where=' AND '.$where;
+								$sql='SELECT '.$valueField.','.$labelField.' FROM '.$table.' WHERE 1=1 '.$where;
+								$res=$GLOBALS['TYPO3_DB']->sql_query($sql);
+								while ($row = $GLOBALS['TYPO3_DB']->sql_fetch_assoc($res)) {
+									$field->list[]=array('label'=>$row[$labelField],'value'=>$row[$valueField]);
+								}
+							}
 						}
 					}
 				}
@@ -50,7 +66,7 @@
 				if (array_key_exists("regExp",$TSAttributes)) $field->regExp=$TSAttributes["regExp"];	
 				$field->TS=$TSAttributes;
 				$field->tempID=$i;
-				$field->fe_user=(string)getTSValue('feuser_map.'.$field->name,$obj->conf);
+				
 				$fields[$name]=$field;
 				
 				

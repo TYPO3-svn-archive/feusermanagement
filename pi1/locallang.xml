@@ -6,11 +6,7 @@
 	</meta>
 	<data type="array">
 		<languageKey index="default" type="array">
-			<label index="list_mode_1">Mode 1</label>
-			<label index="list_mode_2">Mode 2</label>
-			<label index="list_mode_3">Mode 3</label>
-			<label index="back">Back</label>
-			<label index="submit_button_label">Click here to submit value</label>
+			
 			<label index="required_error">Field '###1###' requires Field '###2###' to be set</label>
 			<label index="not_enter">You did not enter a value for '###1###'</label>
 			<label index="unique_error">Please select a different value for the field ###1###</label>
@@ -21,7 +17,7 @@
 			<label index="admin_error">Internal Error, Please define pi.config.username, pi.config.password, pi.config.pid</label>
 			<label index="banned">You are banned.</label>
 			<label index="checkbox_error">You did not check the Checkbox ###1###</label>
-			<label index="email_error_value_js">src + " is not a valid mail address"</label>
+			<label index="email_error_value_js">value + " is not a valid mail address"</label>
 			<label index="back">Back</label>
 			<label index="field_nickname">Nickname</label>
 			<label index="field_nickname_tooltip">Please enter your Nickname</label>

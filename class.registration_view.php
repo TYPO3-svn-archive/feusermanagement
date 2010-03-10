@@ -198,20 +198,13 @@ function '.$obj->prefixId.'_check_FormSubmit() {
 			$temp='';
 			$onBlur='';
 			if (!$field->value) {
-				$field->value=$obj->getValueFromSession($field);
+				$field->value=$_POST[$field->htmlID];
+				if (!$field->value) $field->value=$obj->getValueFromSession($field);
 			}
 			if ($field->onBlurValidation) $onBlur=" onblur='test".$field->htmlID."(this.value)' ";
 			switch ($field->type) {
 				case "text":
-					if ($_POST[$field->htmlID]) {
-						$field->value=$_POST[$field->htmlID];
-					}
-					else {
-						$sql="SELECT content FROM tx_feregistrationprocess_user_info WHERE id='".$this->uid."' AND type='".$field->dbName."'";
-						if ($res=$GLOBALS['TYPO3_DB']->sql_query($sql)) {
-							$row = $GLOBALS['TYPO3_DB']->sql_fetch_assoc($res);
-						}
-					}
+					
 					$temp='<input type="text" name="'.$obj->prefixId.'['.$field->htmlID.']" value="'.$field->value.'" '.$onBlur.'  id="'.$field->htmlID.'" title="'.$field->tooltip.'" />';
 					break;
 				case "textarea":
@@ -234,7 +227,7 @@ function '.$obj->prefixId.'_check_FormSubmit() {
 					break;
 				case "checkbox":
 					$checked="";
-					if ($_POST[$field->htmlID]||($obj->getValueFromDB($field))) $checked="checked";
+					if ($_POST[$field->htmlID]||($obj->getValueFromSession($field))) $checked="checked";
 					$temp='<input type="checkbox" name="'.$obj->prefixId.'['.$field->htmlID.']" id="'.$field->htmlID.'" value="1" "'.(($field->value)?'checked':'').'" title="'.$field->tooltip.'" '.$checked.' />';
 					break;
 				case "password":
