@@ -6,12 +6,20 @@
 			}
 		}
 	}
+
+	/**
+	 * [Describe function...]
+	 *
+	 * @param	[type]		$pw_orig: ...
+	 * @param	[type]		$obj: ...
+	 * @return	[type]		...
+	 */
 	function encryptPW($pw_orig,$obj) {
 		$retpw=$pw_orig;
 		if (getTSValue('config.useMD5',$obj->conf)) {
 			$retpw=md5($pw_orig);
 		}
-		
+
 		if (is_array($GLOBALS['TYPO3_CONF_VARS']['EXTCONF'][$obj->extKey]['encryptPW'])) {
 			foreach($GLOBALS['TYPO3_CONF_VARS']['EXTCONF'][$obj->extKey]['encryptPW'] as $userFunc) {
 				$params = array(
@@ -22,6 +30,14 @@
 		}
 		return $retpw;
 	}
+
+	/**
+	 * [Describe function...]
+	 *
+	 * @param	[type]		$key: ...
+	 * @param	[type]		$conf: ...
+	 * @return	[type]		...
+	 */
 	function getTSValue($key,$conf) {
 		$subkeys=explode(".",$key);
 		$arr=$conf;

@@ -1,11 +1,11 @@
 <?php
-	
+
 class registration_view {
 	var $emailReg='^[\\w-_\.+]*[\\w-_\.]\@([\\w-_]+\\.)+[\\w]+[\\w]$';
 	var $passwordReg='^.*(?=.{6,})(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).*$';
-	function getFieldValidationJS($field,$obj) {
+	private function getFieldValidationJS($field,$obj) {
 		if (!$field->jsvalidation) return;
-		
+
 		$js='';
 		$validations=split(',',$field->validation);
 		foreach($validations as $validation) {
@@ -18,8 +18,8 @@ class registration_view {
 						if (!regex.test('.$field->htmlID.'_val)) {
 							doSubmit=false;
 							alertMessage="'.$obj->pi_getLL('email_error','',FALSE).'";
-						} 
-						
+						}
+
 					';
 					break;
 				case 'password':
@@ -33,7 +33,7 @@ class registration_view {
 						}
 					';
 					break;
-				
+
 				case 'regExp':
 					$reg=str_replace(chr(92),chr(92).chr(92),$field->regExp);
 					$js.='
@@ -42,10 +42,10 @@ class registration_view {
 						if (!regex.test('.$field->htmlID.'_val)) {
 							doSubmit=false;
 							alertMessage="'.$obj->pi_getLL('email_error','',FALSE).'";
-						} 
-						
+						}
+
 					';
-					break;	
+					break;
 			}
 		}
 		if ($field->equal) {
@@ -85,7 +85,17 @@ class registration_view {
 		}
 		return $js;
 	}
-	function getFormJS($fieldJSArr,$fields,$step,$obj) {
+
+	/**
+	 * [Describe function...]
+	 *
+	 * @param	[type]		$fieldJSArr: ...
+	 * @param	[type]		$fields: ...
+	 * @param	[type]		$step: ...
+	 * @param	[type]		$obj: ...
+	 * @return	[type]		...
+	 */
+	function wrapFormJS($fields,$step,$obj) {
 		$formJS='
 function '.$obj->prefixId.'_check_FormSubmit() {
 	doSubmit=true;
@@ -98,6 +108,16 @@ function '.$obj->prefixId.'_check_FormSubmit() {
 	}
 	return doSubmit;
 }		';
+		$fieldJSArr=array();
+		foreach($fields as $field) {
+			$js='';
+			$js=$this->getFieldValidationJS($field,$obj);
+			if ($js) {
+				$fieldJSArr[]=$js;
+			}
+		}
+
+
 		$submitErrorAction=getTSValue('config.formNoSubmitAction',$obj->conf);
 		$formJSMarker=array();
 		$formJSMarker['###FORM_VALIDATING###']=implode("\n",$fieldJSArr);
@@ -108,6 +128,7 @@ function '.$obj->prefixId.'_check_FormSubmit() {
 				$params = array(
 					'formJS' => &$formJS,
 					'functionName' => $obj->prefixId.'_check_FormSubmit',
+					'fieldJSArr' => $fieldJSArr,
 					'fields' => $fields,
 					'step' =>$step
 				);
@@ -116,13 +137,22 @@ function '.$obj->prefixId.'_check_FormSubmit() {
 		}
 		return $formJS;
 	}
-	function getJS($field,$obj) {
+
+	/**
+	 * [Describe function...]
+	 *
+	 * @param	[type]		$field: ...
+	 * @param	[type]		$obj: ...
+	 * @return	[type]		...
+	 */
+	function getOnBlurJS($field,$obj) {
 		$trueAction='';
 		$falseAction='';
 		$js='';
+		// THIS HOOK IS FOR CHANGING THE TRUEACTION AND FALSEACTION
 		if (is_array($GLOBALS['TYPO3_CONF_VARS']['EXTCONF'][$obj->extKey]['js_actions'])) {
 			foreach($GLOBALS['TYPO3_CONF_VARS']['EXTCONF'][$obj->extKey]['js_actions'] as $userFunc) {
-				
+
 				$params = array(
 					'trueAction'=>&$trueAction,
 					'falseAction'=>&$falseAction,
@@ -160,7 +190,7 @@ function '.$obj->prefixId.'_check_FormSubmit() {
 						 }
 					  }
 					';
-				
+
 					break;
 				case "regExp":
 					$reg=str_replace(chr(92),chr(92).chr(92),$field->regExp);
@@ -186,13 +216,22 @@ function '.$obj->prefixId.'_check_FormSubmit() {
 							);
 							$js.=t3lib_div::callUserFunction($userFunc, $params, $obj);
 						}
-					} 
-				
+					}
+
 				break;
 			}
 		}
 		return $js;
 	}
+
+	/**
+	 * [Describe function...]
+	 *
+	 * @param	[type]		$allFields: ...
+	 * @param	[type]		$markerArr: ...
+	 * @param	[type]		$obj: ...
+	 * @return	[type]		...
+	 */
 	function fillMarkers($allFields,$markerArr,$obj) {
 		foreach($allFields as $field) {
 			$temp='';
@@ -201,13 +240,17 @@ function '.$obj->prefixId.'_check_FormSubmit() {
 				$field->value=$obj->piVars[$field->htmlID];
 				if (!$field->value) $field->value=$obj->getValueFromSession($field);
 			}
-			$stdWrapConf=getTSValue('value.stdWrap',$field->TS);
-			$field->value=$obj->cObj->stdWrap($field->value,$stWrapConf);
-			
+			#$stdWrapConf=getTSValue('value.stdWrap',$field->TS);
+			$stdWrapConf=getTSValue('value',$field->TS);
+			$field->value=$obj->cObj->stdWrap($field->value,$stdWrapConf);
+			if ($field->type=='hidden') {
+				#t3lib_div::debug($field);
+				#t3lib_div::debug($stdWrapConf);
+			}
 			if ($field->onBlurValidation) $onBlur=" onblur='test".$field->htmlID."(this.value)' ";
 			switch ($field->type) {
 				case "text":
-					
+
 					$temp='<input type="text" name="'.$obj->prefixId.'['.$field->htmlID.']" value="'.$field->value.'" '.$onBlur.'  id="'.$field->htmlID.'" title="'.$field->tooltip.'" />';
 					break;
 				case "textarea":
@@ -249,16 +292,35 @@ function '.$obj->prefixId.'_check_FormSubmit() {
 			$markerArr["###".$field->markerName."_REQUIRED###"]=($field->required)?$obj->requiredMarker:"";
 			$markerArr["###".$field->markerName."_ERROR###"]="<div id='".$field->errField."'></div>";
 			$htmlFields[$field->markerName]=$temp;
-			
+
 			$value=$obj->getValueFromSession($field);
 			$markerArr["###".$field->markerName."_VALUE###"]=$value;
-		
+
 		}
 		$markerArr["###GENERAL_REQUIRED###"]=$obj->requiredMarker;
+		#$markerArr["###FORM_BEGIN###"]="<form name='".$obj->prefixId."reg_form' action='".$obj->baseURL.$obj->cObj->getTypoLink_URL($GLOBALS['TSFE']->id)."' method='POST' onSubmit='return ".$obj->prefixId."_check_FormSubmit();'>";
 		$markerArr["###FORM_BEGIN###"]="<form name='".$obj->prefixId."reg_form' action='".$obj->baseURL.$obj->cObj->getTypoLink_URL($GLOBALS['TSFE']->id)."' method='POST' onSubmit='return ".$obj->prefixId."_check_FormSubmit();'>";
-		$markerArr["###FORM_BEGIN###"]="<form name='".$obj->prefixId."reg_form' action='".$obj->baseURL."index.php?id=".$GLOBALS['TSFE']->id."' method='POST' onSubmit='return ".$obj->prefixId."_check_FormSubmit();'>";
 		$markerArr["###FORM_END###"]='<input type="hidden" name="'.$obj->prefixId.'[ccm_regstep]" value="'.$obj->currStep.'"></form>';
 		return $markerArr;
+	}
+	/**
+	 * [Describe function...]
+	 *
+	 * @return	[type]		...
+	 */
+	function getFE_User_Marker($uid=0) {
+		$arr=array();
+		if (!$uid) $uid=$GLOBALS['TSFE']->fe_user->user['uid'];
+		$uid=(int)$uid;
+		$sql='SELECT * FROM fe_users WHERE uid='.$uid;
+		$res=$GLOBALS['TYPO3_DB']->sql_query($sql);
+		if ($row = $GLOBALS['TYPO3_DB']->sql_fetch_assoc($res)) {
+			foreach ($row as $key=>$value) {
+				$arr["###FEUSER_".strtoupper($key)."###"]=$value;
+			}
+		}
+
+		return $arr;
 	}
 }
 ?>
