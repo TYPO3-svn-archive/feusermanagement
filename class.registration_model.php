@@ -2,7 +2,7 @@
 	
 				
 	class registration_model {
-		function getCurrentFields($TSstep,$obj) {
+		function getCurrentFields($TSstep,$obj,$load_data=0) {
 			$i=0;
 			$TSfields=$TSstep["fields."];
 			$fields=array();
@@ -64,6 +64,35 @@
 				if (array_key_exists("unique",$TSAttributes)) $field->unique=$TSAttributes["unique"];	
 				if (array_key_exists("equal",$TSAttributes)) $field->equal=$TSAttributes["equal"];	
 				if (array_key_exists("regExp",$TSAttributes)) $field->regExp=$TSAttributes["regExp"];	
+				if ($load_data) {
+					if (!$field->value) $field->value=$obj->getValueFromSession($field);
+					if (!$field->value && $obj->prefixId=='tx_feusermanagement_pi2') {
+						//load Data From fe_user
+						
+						$maparr=getTSValue('feuser_map',$obj->conf);
+						foreach($maparr as $fe_name=>$field_name) {
+							if ($field_name==$field->name) {
+								$sql='SELECT '.$fe_name.' FROM fe_users WHERE uid="'.$obj->feuser_uid.'"';
+								$res=$GLOBALS['TYPO3_DB']->sql_query($sql);
+								if ($row = $GLOBALS['TYPO3_DB']->sql_fetch_assoc($res)) {
+									$field->value=$row[$fe_name];
+								}
+							}
+						}
+						
+						if (is_array($GLOBALS['TYPO3_CONF_VARS']['EXTCONF'][$obj->extKey]['loadData'])) {
+							foreach($GLOBALS['TYPO3_CONF_VARS']['EXTCONF'][$obj->extKey]['loadData'] as $userFunc) {
+								
+								$params = array(
+									'obj'=>&$obj,
+									'field'=>&$field,
+								);
+								t3lib_div::callUserFunction($userFunc, $params, $this);
+							}
+						}
+					}
+				}
+				
 				$field->TS=$TSAttributes;
 				$field->tempID=$i;
 				
@@ -74,11 +103,11 @@
 			
 			return $fields;
 		}
-		function getAllFields($obj) {
+		function getAllFields($obj,$load_data=0) {
 			$allFields=array();
 			$count=$obj->getLastStepNr();
 			for ($i=0;$i<=$count;$i++) {
-				$allFields=array_merge($allFields,$this->getCurrentFields($obj->conf["steps."][$i."."],$obj));
+				$allFields=array_merge($allFields,$this->getCurrentFields($obj->conf["steps."][$i."."],$obj,$load_data));
 			}
 			return $allFields;
 		}

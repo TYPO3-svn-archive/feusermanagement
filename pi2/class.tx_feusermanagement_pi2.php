@@ -83,15 +83,6 @@ class tx_feusermanagement_pi2 extends tslib_pibase {
 			return 'No user is logged in';
 		}
 		
-		### Template ###
-		$templateFile=getTSValue('config.template',$conf);
-		if (!file_exists($templateFile)) {
-			return "Template File: '".$templateFile."' not found";
-		}
-
-		$templatef = $this->cObj->fileResource($templateFile);
-		$this->templatefile=$templatef;
-		
 		$step=$GLOBALS["TSFE"]->fe_user->getKey("ses","ccm_prof_step");
 		
 		### SPRUNG AUF VORGÄNGERSEITE? ###
@@ -104,9 +95,7 @@ class tx_feusermanagement_pi2 extends tslib_pibase {
 				$checkInput=false;
 			}
 		}
-		
-		
-		
+
 		if (!$step) {
 			$GLOBALS["TSFE"]->fe_user->setKey("ses","ccm_prof_step",1);
 			$step=1;
@@ -128,12 +117,12 @@ class tx_feusermanagement_pi2 extends tslib_pibase {
 		}
 		$this->step=$step;
 		### GET TEMPLATES ###
-		$template=$this->cObj->getSubpart($this->templatef,"STEP_".$step);
-		$errorTempl=$this->cObj->getSubpart($this->templatef,"ERROR_PART");
-		$finalTempl=$this->cObj->getSubpart($this->templatef,"FINAL_SCREEN");
-		$deleteTempl=$this->cObj->getSubpart($this->templatef,"DELETED");
+		$template=$this->cObj->getSubpart($this->templatefile,"STEP_".$step);
+		$errorTempl=$this->cObj->getSubpart($this->templatefile,"ERROR_PART");
+		$finalTempl=$this->cObj->getSubpart($this->templatefile,"FINAL_SCREEN");
+		$deleteTempl=$this->cObj->getSubpart($this->templatefile,"DELETED");
 		$errorHTML=str_replace("ERROR_MSG",$this->errMsg,$errorTempl);
-		$fields=$this->modelLib->getCurrentFields($this->conf["steps."][$step."."],$this);
+		$fields=$this->modelLib->getCurrentFields($this->conf["steps."][$step."."],$this,1);
 		
 		### HOOK processFields ###
 		if (is_array($GLOBALS['TYPO3_CONF_VARS']['EXTCONF'][$this->extKey]['processFields_pi2'])) {
@@ -211,7 +200,7 @@ class tx_feusermanagement_pi2 extends tslib_pibase {
 		### GET HTML ###
 		$markerArr=array();
 		$htmlFields=array();
-		$allFields=$this->modelLib->getAllFields($this);
+		$allFields=$this->modelLib->getAllFields($this,1);
 		
 		$markerArr["###SUBMIT###"]='<input type="submit" value="'.$this->pi_getLL('submit_label','',FALSE).'" />';
 		$markerArr["###STEP###"]=$step." / ".$lastStep;
@@ -220,7 +209,8 @@ class tx_feusermanagement_pi2 extends tslib_pibase {
 			###OLD VALUES###
 		$markerArr=$this->viewLib->fillMarkers($allFields,$markerArr,$this);
 		$markerArr=array_merge($markerArr,$this->getFE_User_Marker());
-
+		
+		
 			###ERROR_HTML###
 		$errorHTML=str_replace("###ERROR_MSG###",$this->errMsg,$errorTempl);
 		$markerArr["###ERROR###"]=($this->errMsg)?$errorHTML:"";
