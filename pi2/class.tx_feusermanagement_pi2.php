@@ -82,7 +82,6 @@ class tx_feusermanagement_pi2 extends tslib_pibase {
 		if (!$this->feuser_uid) {
 			return 'No user is logged in';
 		}
-		
 		$step=$GLOBALS["TSFE"]->fe_user->getKey("ses","ccm_prof_step");
 		
 		### SPRUNG AUF VORGÄNGERSEITE? ###
@@ -238,9 +237,9 @@ class tx_feusermanagement_pi2 extends tslib_pibase {
 		if (!$final) {
 			$template=str_replace(array_keys($markerArr),$markerArr,$template);
 		} else {
-			
-			$template=str_replace(array_keys($markerArr),$markerArr,$finalTempl);
 			$this->updateFEUser();
+			$markerArr=array_merge($markerArr,$this->getFE_User_Marker());
+			$template=str_replace(array_keys($markerArr),$markerArr,$finalTempl);
 		}
 		$content.='
 			<script type="text/javascript">
@@ -259,9 +258,14 @@ class tx_feusermanagement_pi2 extends tslib_pibase {
 	}
 	function getFE_User_Marker() {
 		$arr=array();
-		foreach ($GLOBALS['TSFE']->fe_user->user as $attrib=>$value) {
-			$arr["###FEUSER_".$attrib."###"]=$value;
+		$sql='SELECT * FROM fe_users WHERE uid='.$GLOBALS['TSFE']->fe_user->user['uid'];
+		$res=$GLOBALS['TYPO3_DB']->sql_query($sql);
+		if ($row = $GLOBALS['TYPO3_DB']->sql_fetch_assoc($res)) {
+			foreach ($row as $key=>$value) {
+				$arr["###FEUSER_".strtoupper($key)."###"]=$value;
+			}
 		}
+		
 		return $arr;
 	}
 	function get_fe_fieldname($field) {
@@ -300,27 +304,35 @@ class tx_feusermanagement_pi2 extends tslib_pibase {
 	}
 	function updateFEUser() {
 		$allFields=$this->modelLib->getAllFields($this);
-		
+				
 		$map=array();
 		
-		foreach($allFields as $field) {
-			if ($field->fe_user) {
-				$map[$field->fe_user]=mysql_real_escape_string($this->getValueFromSession($field));
-			}
-			if ($field->fe_user=='password') {
+		$maparr=getTSValue('feuser_map',$this->conf);
+		foreach($maparr as $fe_name=>$field_name) {
+			$map[$fe_name]=mysql_real_escape_string($this->getValueFromSession($allFields[$field_name]));
+			if ($fe_name=='password') {
 				if (getTSValue('config.useMD5',$this->conf)) {
-					$map[$field->fe_user]=md5($map[$field->fe_user]);
+					$map['password']=md5($map['password']);
 				}
 			}
 		}
 		
 		foreach ($map as $key=>$value) {
 			$updateStr.=(strlen($updateStr))?',':'';
-			$updateStr.=$key.'="'.mysql_real_escape_string($value).'"';
+			$updateStr.=$key.'="'.$value.'"';
 		}
 		
 		$sql="UPDATE fe_users SET ".$updateStr." WHERE uid='".$this->feuser_uid."'";
 		$GLOBALS['TYPO3_DB']->sql_query($sql);
+		
+		if (is_array($GLOBALS['TYPO3_CONF_VARS']['EXTCONF'][$this->extKey]['feuser_write'])) {
+			foreach($GLOBALS['TYPO3_CONF_VARS']['EXTCONF'][$this->extKey]['feuser_write'] as $userFunc) {
+				$params = array(
+					'action' => 'update',
+				);
+				t3lib_div::callUserFunction($userFunc, $params, $this);
+			}
+		}
 	}
 	
 	function getLastStepNr() {
@@ -431,7 +443,7 @@ class tx_feusermanagement_pi2 extends tslib_pibase {
 			if ($field->required) {
 				$name=$field->name;
 				$id=$field->htmlID;
-				if (!(isset($_POST[$id]) && ($_POST[$id]))) {
+				if (!(isset($this->piVars[$id]) && ($this->piVars[$id]))) {
 					/*
 					$value=$_POST[$id];
 					$valueEsc=mysql_real_escape_string($value);
@@ -445,6 +457,7 @@ class tx_feusermanagement_pi2 extends tslib_pibase {
 					*/
 					if (true||!$found) {
 						$this->errMsg=$this->prepareMessage(array($this->pi_getLL('not_enter','',FALSE),$field->label));
+						t3lib_div::debug(array($field,$this->errMsg));
 						$valid=false;
 					}
 				}

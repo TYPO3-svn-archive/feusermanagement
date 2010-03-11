@@ -190,7 +190,7 @@ class tx_feusermanagement_pi1 extends tslib_pibase {
 			$navigation.=$backlink;
 		}
 		$markerArr["###NAVIGATION###"]=$navigation;
-		#t3lib_div::debug($markerArr);
+		
 			### HOOK fillMarker ###
 		if (is_array($GLOBALS['TYPO3_CONF_VARS']['EXTCONF'][$this->extKey]['fillMarker'])) {
 			foreach($GLOBALS['TYPO3_CONF_VARS']['EXTCONF'][$this->extKey]['fillMarker'] as $userFunc) {
@@ -224,6 +224,7 @@ class tx_feusermanagement_pi1 extends tslib_pibase {
 		if ($final) {
 		### SESSION LÖSCHEN ###
 			$GLOBALS["TSFE"]->fe_user->setKey('ses','ccm_reg_step',"0");
+			$this->clearSessionData();
 		}
 		return $this->pi_wrapInBaseClass($content);
 	}
@@ -416,8 +417,8 @@ class tx_feusermanagement_pi1 extends tslib_pibase {
 		$GLOBALS['TYPO3_DB']->sql_query($sql);
 		$id=$GLOBALS['TYPO3_DB']->sql_insert_id ();
 		### HOOK afterregistration ###
-		if (is_array($GLOBALS['TYPO3_CONF_VARS']['EXTCONF'][$this->extKey]['afterUserCreate'])) {
-			foreach($GLOBALS['TYPO3_CONF_VARS']['EXTCONF'][$this->extKey]['afterUserCreate'] as $userFunc) {
+		if (is_array($GLOBALS['TYPO3_CONF_VARS']['EXTCONF'][$this->extKey]['feuser_write'])) {
+			foreach($GLOBALS['TYPO3_CONF_VARS']['EXTCONF'][$this->extKey]['feuser_write'] as $userFunc) {
 				$params = array(
 					'action' => 'new',
 					'uid'=>$id,
@@ -440,8 +441,17 @@ class tx_feusermanagement_pi1 extends tslib_pibase {
 					$GLOBALS['TSFE']->fe_user->start(); 
 				}
 				if ($redirPid=getTSValue('config.autologinRedirPid',$this->conf)) {
-					
-					header('Location: '.$this->baseURL.$this->cObj->getTypoLink_URL($redirPid));
+					$url=$this->baseURL.$this->cObj->getTypoLink_URL($redirPid);
+					if (is_array($GLOBALS['TYPO3_CONF_VARS']['EXTCONF'][$this->extKey]['finish_redirect'])) {
+						foreach($GLOBALS['TYPO3_CONF_VARS']['EXTCONF'][$this->extKey]['finish_redirect'] as $userFunc) {
+							$params = array(
+								'url' => &$url,
+							);
+							t3lib_div::callUserFunction($userFunc, $params, $this);
+						}
+					}
+					#header('Location: '.$url);
+					t3lib_div::debug('Location: '.$url);
 				}
 			}
 		}
@@ -639,6 +649,12 @@ class tx_feusermanagement_pi1 extends tslib_pibase {
 			$content="ungültiger Token";
 		}
 		return $content;
+	}
+	function clearSessionData() {
+		$allFields=$this->modelLib->getAllFields($this);
+		foreach ($allFields as $field) {
+			$GLOBALS["TSFE"]->fe_user->setKey('ses',$this->prefixId.$field->name,0);
+		}
 	}
 	function renderAdminConfirmation($action,$token) {
 		$user=(int)$this->piVars['fe_user'];

@@ -198,9 +198,12 @@ function '.$obj->prefixId.'_check_FormSubmit() {
 			$temp='';
 			$onBlur='';
 			if (!$field->value) {
-				$field->value=$_POST[$field->htmlID];
+				$field->value=$obj->piVars[$field->htmlID];
 				if (!$field->value) $field->value=$obj->getValueFromSession($field);
 			}
+			$stdWrapConf=getTSValue('value.stdWrap',$field->TS);
+			$field->value=$obj->cObj->stdWrap($field->value,$stWrapConf);
+			
 			if ($field->onBlurValidation) $onBlur=" onblur='test".$field->htmlID."(this.value)' ";
 			switch ($field->type) {
 				case "text":
@@ -226,8 +229,9 @@ function '.$obj->prefixId.'_check_FormSubmit() {
 					}
 					break;
 				case "checkbox":
+					#t3lib_div::debug($field);
 					$checked="";
-					if ($_POST[$field->htmlID]||($obj->getValueFromSession($field))) $checked="checked";
+					if ($obj->piVars[$field->htmlID]||($obj->getValueFromSession($field))) $checked="checked";
 					$temp='<input type="checkbox" name="'.$obj->prefixId.'['.$field->htmlID.']" id="'.$field->htmlID.'" value="1" "'.(($field->value)?'checked':'').'" title="'.$field->tooltip.'" '.$checked.' />';
 					break;
 				case "password":
@@ -235,7 +239,7 @@ function '.$obj->prefixId.'_check_FormSubmit() {
 					$temp='<input type="password" name="'.$obj->prefixId.'['.$field->htmlID.']" '.$onBlur.' title="'.$field->tooltip.'" value="" id="'.$field->htmlID.'" />';
 					break;
 				case "hidden":
-					if ($_POST[$field->htmlID]) $field->value=$_POST[$field->htmlID];
+					if ($obj->piVars[$field->htmlID]) $field->value=$obj->piVars[$field->htmlID];
 					$temp='<input type="hidden"  name="'.$obj->prefixId.'['.$field->htmlID.']" value="'.$field->value.'" />';
 					break;
 			}
