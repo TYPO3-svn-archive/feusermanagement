@@ -212,7 +212,7 @@ class tx_feusermanagement_pi2 extends tslib_pibase {
 			$template=str_replace(array_keys($markerArr),$markerArr,$template);
 		} else {
 			$this->updateFEUser();
-			$markerArr=array_merge($markerArr,$this->getFE_User_Marker());
+			$markerArr=array_merge($markerArr,$this->viewLib->getFE_User_Marker());
 			$template=str_replace(array_keys($markerArr),$markerArr,$finalTempl);
 		}
 		$content.='
@@ -227,6 +227,7 @@ class tx_feusermanagement_pi2 extends tslib_pibase {
 		if ($final) {
 		### SESSION LÖSCHEN ###
 			$GLOBALS["TSFE"]->fe_user->setKey("ses","ccm_prof_step","0");
+			$this->modelLib->clearValuesInSession($this);
 		}
 		return $this->pi_wrapInBaseClass($content);
 	}
@@ -265,7 +266,8 @@ class tx_feusermanagement_pi2 extends tslib_pibase {
 			$id=$field->htmlID;
 			if (isset($this->piVars[$id])) {
 				$value=$this->piVars[$id];
-				$GLOBALS["TSFE"]->fe_user->setKey('ses',$this->prefixId.$field->name,$value);
+				#$GLOBALS["TSFE"]->fe_user->setKey('ses',$this->prefixId.$field->name,$value);
+				$this->modelLib->saveValueToSession($field->name,$value,$this);
 				### HOOK afterValueInsert ###
 				if (is_array($GLOBALS['TYPO3_CONF_VARS']['EXTCONF'][$this->extKey]['afterValueInsert_pi2'])) {
 					foreach($GLOBALS['TYPO3_CONF_VARS']['EXTCONF'][$this->extKey]['afterValueInsert_pi2'] as $userFunc) {
@@ -293,7 +295,7 @@ class tx_feusermanagement_pi2 extends tslib_pibase {
 
 		$maparr=getTSValue('feuser_map',$this->conf);
 		foreach($maparr as $fe_name=>$field_name) {
-			$map[$fe_name]=mysql_real_escape_string($this->getValueFromSession($allFields[$field_name]));
+			$map[$fe_name]=$this->modelLib->secureDataBeforeInsertUpdate($this->getValueFromSession($allFields[$field_name]));
 			if ($fe_name=='password') {
 				if (getTSValue('config.useMD5',$this->conf)) {
 					$map['password']=md5($map['password']);
@@ -389,7 +391,8 @@ class tx_feusermanagement_pi2 extends tslib_pibase {
 	 * @return	[type]		...
 	 */
 	function getValueFromSession($field) {
-		$sesVal=$GLOBALS["TSFE"]->fe_user->getKey('ses',$this->prefixId.$field->name);
+		#$sesVal=$GLOBALS["TSFE"]->fe_user->getKey('ses',$this->prefixId.$field->name);
+		$sesVal=$this->modelLib->getValueFromSession($field->name,$this);
 		if ($sesVal) return $sesVal;
 		if ($field->value) return $field->value; //Wert der übers Typoscript übergeben wurde, für z.B. Hidden-Fields
 

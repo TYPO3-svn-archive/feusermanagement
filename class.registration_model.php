@@ -144,5 +144,31 @@
 			if (array_key_exists($name,$fields)) return $fields[$name];
 			return "";
 		}
+		function getValueFromSession($key,$obj) {
+			$sesArr=$GLOBALS["TSFE"]->fe_user->getKey('ses',$obj->prefixId);
+			if (is_array($sesArr)) return $sesArr[$key];
+			return false;
+		}
+		function saveValueToSession($key,$value,$obj) {
+			$sesArr=$GLOBALS["TSFE"]->fe_user->getKey('ses',$obj->prefixId);
+			if (!is_array($sesArr)) $sesArr=array();
+			$sesArr[$key]=$value;
+			$GLOBALS["TSFE"]->fe_user->setKey('ses',$obj->prefixId,$sesArr);
+		}
+		function clearValuesInSession($obj) {
+			$GLOBALS['TSFE']->fe_user->setKey('ses',$obj->prefixId,false);
+		}
+		function secureDataBeforeInsertUpdate($value) {
+			$retValue=mysql_real_escape_string(htmlentities($value));
+			if (is_array($GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['feusermanagement']['secure_data'])) {
+				foreach($GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['feusermanagement']['secure_data'] as $userFunc) {
+					$params = array(
+						'value' => $value,
+					);
+					$retValue=t3lib_div::callUserFunction($userFunc, $params, $this);
+				}
+			}
+			return $retValue;
+		}
 	}
 ?>

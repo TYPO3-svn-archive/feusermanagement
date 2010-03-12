@@ -223,7 +223,8 @@ class tx_feusermanagement_pi1 extends tslib_pibase {
 		if ($final) {
 		### SESSION LÖSCHEN ###
 			$GLOBALS["TSFE"]->fe_user->setKey('ses','ccm_reg_step',"0");
-			$this->clearSessionData();
+			#$this->clearSessionData();
+			$this->modelLib->clearValuesInSession($this);
 		}
 		return $this->pi_wrapInBaseClass($content);
 	}
@@ -243,7 +244,8 @@ class tx_feusermanagement_pi1 extends tslib_pibase {
 				$name=$field->name;
 				$id=$field->htmlID;
 				if (!(isset($this->piVars[$id]) && ($this->piVars[$id]))) {
-					$valid=$GLOBALS["TSFE"]->fe_user->getKey('ses',$this->prefixId.$field->htmlId);
+					#$valid=$GLOBALS["TSFE"]->fe_user->getKey('ses',$this->prefixId.$field->htmlId);
+					$valid=$this->modelLib->getValueFromSession($field->htmlId,$this);
 					$this->errMsg=$this->prepareMessage(array($this->pi_getLL('not_enter','',FALSE),$field->label));
 				}
 
@@ -342,7 +344,8 @@ class tx_feusermanagement_pi1 extends tslib_pibase {
 			$id=$field->htmlID;
 			if (isset($this->piVars[$id])) {
 				$value=$this->piVars[$id];
-				$GLOBALS["TSFE"]->fe_user->setKey('ses',$this->prefixId.$field->name,$value);
+				
+				$this->modelLib->saveValueToSession($field->name,$value,$this);
 				### HOOK afterValueInsert ###
 				if (is_array($GLOBALS['TYPO3_CONF_VARS']['EXTCONF'][$this->extKey]['afterValueInsert'])) {
 					foreach($GLOBALS['TYPO3_CONF_VARS']['EXTCONF'][$this->extKey]['afterValueInsert'] as $userFunc) {
@@ -365,7 +368,8 @@ class tx_feusermanagement_pi1 extends tslib_pibase {
 	 * @return	[type]		...
 	 */
 	function getValueFromSession($field) {
-		$sesVal=$GLOBALS["TSFE"]->fe_user->getKey('ses',$this->prefixId.$field->name);
+		$sesVal=$this->modelLib->getValueFromSession($field->name,$this);
+		#$sesVal=$GLOBALS["TSFE"]->fe_user->getKey('ses',$this->prefixId.$field->name);
 		if ($sesVal) return $sesVal;
 		if ($field->value) return $field->value; //Wert der übers Typoscript übergeben wurde, für z.B. Hidden-Fields
 		return;
@@ -383,9 +387,10 @@ class tx_feusermanagement_pi1 extends tslib_pibase {
 
 		$maparr=getTSValue('feuser_map',$this->conf);
 		foreach($maparr as $fe_name=>$field_name) {
-			$map[$fe_name]=mysql_real_escape_string($this->getValueFromSession($allFields[$field_name]));
+			$map[$fe_name]=$this->modelLib->secureDataBeforeInsertUpdate($this->getValueFromSession($allFields[$field_name]));
 			if ($fe_name=='password') {
-				$GLOBALS["TSFE"]->fe_user->setKey('ses',$this->prefixId.'password',$map['password']);
+				$this->modelLib->saveValueToSession('password',$map['password'],$this);
+				#$GLOBALS["TSFE"]->fe_user->setKey('ses',$this->prefixId.'password',$map['password']);
 				if (getTSValue('config.useMD5',$this->conf)) {
 					$map['password']=md5($map['password']);
 				}
@@ -395,7 +400,8 @@ class tx_feusermanagement_pi1 extends tslib_pibase {
 		if (getTSValue('config.autogenPwd',$this->conf)) {
 			$pwd=rand(100000,999999);
 			$clearTextPwd=$pwd;
-			$GLOBALS["TSFE"]->fe_user->setKey('ses',$this->prefixId.'password',$clearTextPwd);
+			$this->modelLib->saveValueToSession('password',$clearTextPwd,$this);
+			#$GLOBALS["TSFE"]->fe_user->setKey('ses',$this->prefixId.'password',$clearTextPwd);
 			if (getTSValue('config.useMD5',$this->conf)) {
 				$pwd=md5($pwd);
 			}
@@ -521,7 +527,8 @@ class tx_feusermanagement_pi1 extends tslib_pibase {
 		$confirmLink=$this->baseURL.$this->cObj->getTypoLink_URL($GLOBALS['TSFE']->id,array($this->prefixId.'[userConfirmationToken]'=>$user['registration_token'],$this->prefixId.'[fe_user]'=>$id));
 		$markerArr=array();
 		$markerArr=array_merge($markerArr,$this->viewLib->getFE_User_Marker($id));
-		$markerArr['###FEUSER_PASSWORD###']=$GLOBALS["TSFE"]->fe_user->getKey('ses',$this->prefixId.'password');
+		$markerArr['###FEUSER_PASSWORD###']=$this->modelLib->getValueFromSession('password',$this);
+		#$markerArr['###FEUSER_PASSWORD###']=$GLOBALS["TSFE"]->fe_user->getKey('ses',$this->prefixId.'password');
 		
 		$html=str_replace(array_keys($markerArr),$markerArr,$html);
 
@@ -758,10 +765,11 @@ class tx_feusermanagement_pi1 extends tslib_pibase {
 	 * @return	[type]		...
 	 */
 	function clearSessionData() {
-		$allFields=$this->modelLib->getAllFields($this);
-		foreach ($allFields as $field) {
-			$GLOBALS["TSFE"]->fe_user->setKey('ses',$this->prefixId.$field->name,0);
-		}
+		$this->modelLib->clearValuesInSession($this);
+		#$allFields=$this->modelLib->getAllFields($this);
+		#foreach ($allFields as $field) {
+		#	$GLOBALS["TSFE"]->fe_user->setKey('ses',$this->prefixId.$field->name,0);
+		#}
 	}
 
 	/**
