@@ -1,14 +1,14 @@
 <?
 class tx_feumajax {
-
+    
     function cli_main() {
-
+		
 		$confVars=unserialize($GLOBALS["TYPO3_CONF_VARS"]['EXT']['extConf']['feusermanagement']);
 		tslib_eidtools::connectDB();
-		$key=mysql_real_escape_string($_GET["reg_db_key"]);
-		$value=mysql_real_escape_string($_GET["reg_db_value"]);
+		$key=mysql_real_escape_string($_GET["key"]);
+		$value=mysql_real_escape_string($_GET["value"]);
 		if ($key&&$value) $unique=true;
-
+		
 		$fieldarray=array();
 		$sql='DESCRIBE fe_users';
 		$res=$GLOBALS['TYPO3_DB']->sql_query($sql);
@@ -16,11 +16,12 @@ class tx_feumajax {
 			$fieldarray[]=$row['Field'];
 		}
 		if (!in_array($key,$fieldarray)) return 0;
-
-
+		$forbiddenKeys=array('uid','password');
+		if (in_array($key,$forbiddenKeys)) return 0;
+		
 		$sql='SELECT * FROM fe_users WHERE '.$key.'="'.$value.'"';
 		$res=$GLOBALS['TYPO3_DB']->sql_query($sql);
-
+		
 		if ($row=$GLOBALS['TYPO3_DB']->sql_fetch_assoc($res)) {
 			//value exists in DB
 			//check if given to the current user
@@ -43,6 +44,6 @@ class tx_feumajax {
 	}
 }
 $cliObj = t3lib_div::makeInstance('tx_feumajax');
-$cliObj->cli_main();
-
+$cliObj->cli_main();	
+		
 ?>
