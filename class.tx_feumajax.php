@@ -4,6 +4,7 @@ class tx_feumajax {
     function cli_main() {
 		
 		$confVars=unserialize($GLOBALS["TYPO3_CONF_VARS"]['EXT']['extConf']['feusermanagement']);
+		$allowedKeys=$confVars['allowFields'];
 		tslib_eidtools::connectDB();
 		$key=mysql_real_escape_string($_GET["key"]);
 		$value=mysql_real_escape_string($_GET["value"]);
@@ -17,8 +18,8 @@ class tx_feumajax {
 		}
 		if (!in_array($key,$fieldarray)) return 0;
 		$forbiddenKeys=array('uid','password');
-		if (in_array($key,$forbiddenKeys)) return 0;
-		
+		if (!in_array($key,$allowedKeys)) return 0;
+		print_r($confVars);
 		$sql='SELECT * FROM fe_users WHERE '.$key.'="'.$value.'"';
 		$res=$GLOBALS['TYPO3_DB']->sql_query($sql);
 		
