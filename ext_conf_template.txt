@@ -1,0 +1,2 @@
+#cat=basic//10; type=string; label = Typ 'string': Bitte eine Kommaseparierte Liste für erlaubte Feuser-felder für die Ajax Requests
+allowFields=username,email

@@ -487,10 +487,9 @@ class tx_feusermanagement_pi1 extends tslib_pibase {
 	}
 
 	/**
-	 * [Describe function...]
-	 *
-	 * @param	[type]		$id: ...
-	 * @return	[type]		...
+	 * 
+	 * @param unknown_type $id
+	 * @return unknown_type
 	 */
 	function generateUserMailConfirmation($id) {
 		$html=$this->userMailTemplate;

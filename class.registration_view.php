@@ -258,8 +258,10 @@ function '.$obj->prefixId.'_check_FormSubmit() {
 					break;
 				case "dropdown":
 					$temp='<select name="'.$obj->prefixId.'['.$field->htmlID.']" id="'.$field->htmlID.'" title="'.$field->tooltip.'">';
+					if ($field->includeEmptyOption) $temp.='<option value="0">'.$obj->pi_getLL('emptyOptionLabel').'</option>';
 					foreach ($field->list as $arr) {
-						$temp.='<option value="'.$arr["value"].'">'.$obj->getString($arr["label"]).'</option>';
+						$selected=($field->value==$arr['value'])?'selected="selected"':'';
+						$temp.='<option value="'.$arr["value"].'" '.$selected.'>'.$obj->getString($arr["label"]).'</option>';
 						#$temp.=$obj->cObj->stdWrap($x,$arr);
 					}
 					$temp.='</select>';

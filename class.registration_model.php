@@ -23,6 +23,7 @@
 				$field=new Field();
 				$field->name=$name;
 				$field->label=$name;
+				
 				$field->markerName=strtoupper($name);
 				$field->tooltip=$name;
 				$field->list=array();
@@ -44,6 +45,7 @@
 					}
 					if (!count($field->list)) {
 						if ($TSRelation=$TSAttributes['relation.']) {
+							
 							if (($table=$TSRelation['table']) && ($valueField=$TSRelation['value_field']) && ($labelField=$TSRelation['label_field'])) {
 								if ($where=$TSRelation['where']) $where=' AND '.$where;
 								$efFields=$obj->cObj->enableFields($table);
@@ -63,7 +65,7 @@
 
 				if (array_key_exists("required",$TSAttributes)) $field->required=$TSAttributes["required"];
 				if (array_key_exists("requires",$TSAttributes)) $field->requires=$TSAttributes["requires"];
-
+				if (array_key_exists("includeEmptyOption",$TSAttributes)) $field->includeEmptyOption=$TSAttributes["includeEmptyOption"];
 				if (array_key_exists("additionalData",$TSAttributes)) $field->additionalData=$TSAttributes["additionalData"];
 				if (array_key_exists("validation",$TSAttributes)) $field->validation=$TSAttributes["validation"];
 				if (array_key_exists("jsvalidation",$TSAttributes)) $field->jsvalidation=$TSAttributes["jsvalidation"];
@@ -107,7 +109,7 @@
 
 				$field->TS=$TSAttributes;
 				$field->tempID=$i;
-
+				
 				$fields[$name]=$field;
 
 

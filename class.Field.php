@@ -23,5 +23,6 @@ class Field {
 		public $validation;
 		public $regExp;
 		public $value;
+		public $includeEmptyOption;
 	}
 ?>
