@@ -20,6 +20,7 @@
 				#t3lib_div::debug($TSAttributes);
 				$i++;
 				$name=$obj->removeDot($key);
+				$htmlPrefix=($obj->conf['config.']['html_prefix'])?$obj->conf['config.']['html_prefix']:'ccm_reg_';
 				$field=new Field();
 				$field->name=$name;
 				$field->label=$name;
@@ -27,16 +28,16 @@
 				$field->markerName=strtoupper($name);
 				$field->tooltip=$name;
 				$field->list=array();
-				$field->errField="ccm_reg_err_".$name;
-				$field->htmlID="ccm_reg_elem".$name;
-				if (array_key_exists("type",$TSAttributes)) $field->type=$TSAttributes["type"];
-				if ($field->type=="dropdown"||$field->type=="radio") {
-					if (array_key_exists("options.",$TSAttributes)&&is_array($TSAttributes["options."])) {
-						$TSOptions=$TSAttributes["options."];
+				$field->errField=$htmlPrefix.'err_'.$name;
+				$field->htmlID=$htmlPrefix.'field_'.$name;
+				if (array_key_exists('type',$TSAttributes)) $field->type=$TSAttributes['type'];
+				if ($field->type=='dropdown'||$field->type=='radio') {
+					if (array_key_exists('options.',$TSAttributes)&&is_array($TSAttributes['options.'])) {
+						$TSOptions=$TSAttributes['options.'];
 						foreach($TSOptions as $key=>$TSoption) {
 
 							if (is_array($TSoption)) {
-								if (array_key_exists("label",$TSoption)&&array_key_exists("value",$TSoption)) {
+								if (array_key_exists('label',$TSoption)&&array_key_exists('value',$TSoption)) {
 									$field->list[]=$TSoption;
 								}
 							}
@@ -60,7 +61,7 @@
 						}
 					}
 				}
-				$field->notCheckedMessage=($field->type=="checkbox")?("'".$obj->prepareMessage(array($obj->pi_getLL('email_error','',FALSE),$field->label))):$obj->prepareMessage(array($obj->pi_getLL('not_enter','',FALSE),$field->label));
+				
 
 
 				if (array_key_exists("required",$TSAttributes)) $field->required=$TSAttributes["required"];
@@ -106,7 +107,7 @@
 						}
 					}
 				}
-
+				$field->notCheckedMessage=($field->type=="checkbox")?("'".$obj->prepareMessage(array($obj->pi_getLL('email_error','',FALSE),$field->label))):$obj->prepareMessage(array($obj->pi_getLL('not_enter','',FALSE),$field->label));
 				$field->TS=$TSAttributes;
 				$field->tempID=$i;
 				
