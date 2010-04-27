@@ -18,16 +18,17 @@ class tx_feumajax {
 		}
 		if (!in_array($key,$fieldarray)) {
 			echo 0;
-			echo 'x';
 			return;
 		}
 		$forbiddenKeys=array('uid','password');
 		if (!in_array($key,$allowedKeys)) {
 			echo 0;
-			echo 'y';
 			return;
 		}
-		
+		if (in_array($key,$forbiddenKeys)) {
+			echo 1;
+			return;
+		}
 		
 		$sql='SELECT * FROM fe_users WHERE '.$key.'="'.$value.'"';
 		$res=$GLOBALS['TYPO3_DB']->sql_query($sql);
