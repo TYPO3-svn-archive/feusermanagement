@@ -24,19 +24,13 @@ plugin.tx_feusermanagement_pi1 {
 		
 		template=EXT:feusermanagement/dummy_template.html
 	}
-	stepjumps {
-		2=1
-	}
 	steps {
 		1.label=Step1
 		1.fields {
-			nickname {
+			username {
 				required=1
-				onBlurValidation=1
-				jsvalidation=1
 				type=text
-				label=LL_field_nickname
-				tooltip=LL_field_nickname_tooltip
+				label=LL_field_username
 				unique=1
 			}
 			password {
@@ -45,13 +39,11 @@ plugin.tx_feusermanagement_pi1 {
 				label=LL_field_password
 				validation=password
 				onBlurValidation=1
-				tooltip=LL_field_password_tooltip
 			}
 			password2 {
 				required=1
 				type=password
 				label=LL_field_password2
-				tooltip=LL_field_password2_tooltip
 				equal=password
 				validation=password
 				jsvalidation=1
@@ -60,47 +52,21 @@ plugin.tx_feusermanagement_pi1 {
 				required=1
 				type=text
 				label=LL_field_email
-				tooltip=LL_field_email_tooltip
 				validation=email
 				jsvalidation=1
+				onBlurValidation=1
 			}
 			surname {
 				type=text
-				label=Surname
-				tooltip=Please enter your surname
-			}
-		}
-		2.label=Step2
-		2.fields {
-			gender {
-				required=1
-				type=radio
-				options {
-					1.label=Mr.
-					1.value=male
-					2.label=Mrs.
-					2.value=female
-				}
-				label=Gender
-			}
-			blubb1 {
-				validation=requires
-				requires=blubb2
-				jsvalidation=1
-				type=text
-			}
-			blubb2 {
-				type=text
-				required=1
+				label=LL_field_surname
 			}
 		}
 	}
 	feuser_map {
-	    nickname=username
+	    username=username
 	    surname=name
 	    password=password
 	    email=email
-		gender=title
 	}
 
 }
