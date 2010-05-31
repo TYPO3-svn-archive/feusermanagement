@@ -55,6 +55,7 @@ class tx_feusermanagement_pi1 extends tslib_pibase {
 	var $currStep=0;
 	var $baseURL='';
 	var $templateFileName='';
+	var $uploadDir='uploads/';
 
 	function init() {
 		$this->baseURL=getTSValue('config.baseURL',$GLOBALS['TSFE']->tmpl->setup);
@@ -68,6 +69,7 @@ class tx_feusermanagement_pi1 extends tslib_pibase {
 		$this->userMailTemplate=$this->cObj->getSubpart($this->templatefile,"USER_MAIL_CONFIRMATION");
 		$this->userMailNotifyTemplate=$this->cObj->getSubpart($this->templatefile,"USER_MAIL_NOTIFICATION");
 		$this->adminMailTemplate=$this->cObj->getSubpart($this->templatefile,"ADMIN_MAIL_USER_CONFIRMATION");
+		if ($uploadDir=getTSValue('config.upload_dir',$this->conf)) $this->uploadDir=$uploadDir;
 	}
 
 	/**
@@ -92,7 +94,7 @@ class tx_feusermanagement_pi1 extends tslib_pibase {
 		}
 		$start_registration=false;
 		$checkInput=true;
-
+		t3lib_div::debug($_FILES);
 
 		### SPRUNG AUF VORGÄNGERSEITE? ###
 		if ($this->piVars['backlinkToStep']&&$GLOBALS["TSFE"]->fe_user->getKey('ses','ccm_reg_step')) { ###SESSION EXISTIERT, UND ER WILL ZURÜCK ###
@@ -244,13 +246,37 @@ class tx_feusermanagement_pi1 extends tslib_pibase {
 				$name=$field->name;
 				$id=$field->htmlID;
 				if (!(isset($this->piVars[$id]) && ($this->piVars[$id]))) {
-					#$valid=$GLOBALS["TSFE"]->fe_user->getKey('ses',$this->prefixId.$field->htmlId);
-					$valid=$this->modelLib->getValueFromSession($field->htmlId,$this);
-					$this->errMsg=$this->prepareMessage(array($this->pi_getLL('not_enter','',FALSE),$field->label));
+					if ($field->type=='upload') {
+						if (isset($_FILES[$this->prefixId]['name'][$field->htmlID])) {
+							
+						} else {
+							$valid=false;
+							$this->errMsg=$this->prepareMessage(array($this->pi_getLL('not_enter_file','',FALSE),$field->label));
+						}
+					} else {
+						$valid=$this->modelLib->getValueFromSession($field->htmlId,$this);
+						$this->errMsg=$this->prepareMessage(array($this->pi_getLL('not_enter','',FALSE),$field->label));
+					}
 				}
-
 			}
-
+			if ($field->type=='upload') {
+				$size=$_FILES['tx_feusermanagement_pi1']['size'][$field->htmlID];
+				$filename=$_FILES['tx_feusermanagement_pi1']['name'][$field->htmlID];
+				$allowedExt=t3lib_div::trimExplode(',',$field->filetypes);
+				if (!in_array('*',$allowedExt)) {
+					$fileext=substr($filename,strrpos($filename,'.'));
+					if (!in_array($fileext,$allowedExt)) {
+						$valid=false;
+						$this->errMsg=$this->prepareMessage(array($this->pi_getLL('wrong_filetype','',FALSE),$field->label,implode(',',$allowedExt)));
+					}
+				}
+				if ($size>$field->filesize) {
+					$valid=false;
+					$this->errMsg=$this->prepareMessage(array($this->pi_getLL('wrong_filesize','',FALSE),$field->label,$field->filesize));
+				}
+				if (!isset($_FILES['tx_feusermanagement_pi1']['tmp_name'][$field->htmlID])) $valid=false;
+				if (strpos($filename,'|')!==false) $valid=false;
+			}
 			if ($field->unique) {
 				$id=$field->htmlID;
 				$value=mysql_real_escape_string($this->piVars[$id]);
@@ -357,7 +383,14 @@ class tx_feusermanagement_pi1 extends tslib_pibase {
 					}
 				}
 			}
-
+			if ($field->type=='upload') {
+				$tmpFile=$_FILES['tx_feusermanagement_pi1']['tmp_name'][$field->htmlID];
+				$origFile=$_FILES['tx_feusermanagement_pi1']['name'][$field->htmlID];
+				
+				$value=$tmpFile.'|'.$origFile;
+				$this->modelLib->saveValueToSession($field->name,$value,$this);
+				
+			}
 		}
 	}
 
@@ -387,6 +420,18 @@ class tx_feusermanagement_pi1 extends tslib_pibase {
 
 		$maparr=getTSValue('feuser_map',$this->conf);
 		foreach($maparr as $fe_name=>$field_name) {
+			$field=$allFields[$field_name];
+			
+			if ($field->type=='upload') {
+				$files=explode('|',$this->getValueFromSession($allFields[$field_name]));
+				$tempFilename=$files[0];
+				$origFilename=$files[1];
+				$path=t3lib_div::getIndpEnv('TYPO3_DOCUMENT_ROOT').'/'.$this->uploadDir;
+				$newFilename=$path.$this->modelLib->getFreeFilename($path,$origFilename,$this->conf['config.']['upload_file_prefix']);
+				move_uploaded_file($tempFilename,$newFilename);
+				$map[$fe_name]=$this->modelLib->secureDataBeforeInsertUpdate($newFilename);
+				
+			}
 			$map[$fe_name]=$this->modelLib->secureDataBeforeInsertUpdate($this->getValueFromSession($allFields[$field_name]));
 			if ($fe_name=='password') {
 				$this->modelLib->saveValueToSession('password',$map['password'],$this);

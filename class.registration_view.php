@@ -262,19 +262,19 @@ function '.$obj->prefixId.'_check_FormSubmit() {
 					foreach ($field->list as $arr) {
 						$selected=($field->value==$arr['value'])?'selected="selected"':'';
 						$temp.='<option value="'.$arr["value"].'" '.$selected.'>'.$obj->getString($arr["label"]).'</option>';
-						#$temp.=$obj->cObj->stdWrap($x,$arr);
 					}
 					$temp.='</select>';
 					break;
 				case "radio":
-					$temp="";
+					$temp='';
 					foreach ($field->list as $arr) {
 						$temp.='<input type="radio" name="'.$obj->prefixId.'['.$field->htmlID.']" id="'.$field->htmlID.'" value="'.$arr["value"].'"  />'.$obj->getString($arr["label"]);
-						#$temp.=$obj->cObj->stdWrap($x,$arr);
 					}
 					break;
+				case 'upload':
+					$temp='<input type="file" name="'.$obj->prefixId.'['.$field->htmlID.']" />';
+					break;
 				case "checkbox":
-					#t3lib_div::debug($field);
 					$checked="";
 					if ($obj->piVars[$field->htmlID]||($obj->getValueFromSession($field))) $checked="checked";
 					$temp='<input type="checkbox" name="'.$obj->prefixId.'['.$field->htmlID.']" id="'.$field->htmlID.'" value="1" "'.(($field->value)?'checked':'').'" title="'.$field->tooltip.'" '.$checked.' />';
@@ -300,8 +300,8 @@ function '.$obj->prefixId.'_check_FormSubmit() {
 
 		}
 		$markerArr["###GENERAL_REQUIRED###"]=$obj->requiredMarker;
-		#$markerArr["###FORM_BEGIN###"]="<form name='".$obj->prefixId."reg_form' action='".$obj->baseURL.$obj->cObj->getTypoLink_URL($GLOBALS['TSFE']->id)."' method='POST' onSubmit='return ".$obj->prefixId."_check_FormSubmit();'>";
-		$markerArr["###FORM_BEGIN###"]="<form name='".$obj->prefixId."reg_form' action='".$obj->baseURL.$obj->cObj->getTypoLink_URL($GLOBALS['TSFE']->id)."' method='POST' onSubmit='return ".$obj->prefixId."_check_FormSubmit();'>";
+		
+		$markerArr["###FORM_BEGIN###"]="<form name='".$obj->prefixId."reg_form' action='".$obj->baseURL.$obj->cObj->getTypoLink_URL($GLOBALS['TSFE']->id)."' method='POST' enctype='multipart/form-data' onSubmit='return ".$obj->prefixId."_check_FormSubmit();'>";
 		$markerArr["###FORM_END###"]='<input type="hidden" name="'.$obj->prefixId.'[ccm_regstep]" value="'.$obj->currStep.'"></form>';
 		return $markerArr;
 	}

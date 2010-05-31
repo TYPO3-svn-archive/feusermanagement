@@ -63,7 +63,8 @@
 				}
 				
 
-
+				if (array_key_exists('fileSize')) $field->filesize=$TSAttributes['fileSize'];
+				if (array_key_exists('fileTypes')) $field->filesize=$TSAttributes['fileTypes'];
 				if (array_key_exists("required",$TSAttributes)) $field->required=$TSAttributes["required"];
 				if (array_key_exists("requires",$TSAttributes)) $field->requires=$TSAttributes["requires"];
 				if (array_key_exists("includeEmptyOption",$TSAttributes)) $field->includeEmptyOption=$TSAttributes["includeEmptyOption"];
@@ -172,6 +173,17 @@
 				}
 			}
 			return $retValue;
+		}
+		function getFreeFilename($path,$filename,$prefix) {
+			
+			$file_ext=substr($filename,$dotpos=strrpos($filename,'.'));
+			$subfilename=substr($filename,0,$dotpos);
+			$counter='';
+			while(file_exists($path.$prefix.$subfilename.$counter.$file_ext)) {
+				$counter++;
+			}
+			$newFileName=$prefix.$subfilename.$counter.$file_ext;
+			return $newFileName;
 		}
 	}
 ?>

@@ -11,6 +11,8 @@ class Field {
 		public $list=array();
 		public $markerName;
 		public $name;
+		public $filetypes='*';
+		public $filesize=65535;
 		public $notCheckedMessage='';
 		public $onBlurCode='';
 		public $required=0;

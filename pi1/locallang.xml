@@ -29,7 +29,9 @@
 			<label index="field_email_tooltip">Please enter your E-Mail address</label>
 			<label index="submit_label">Submit</label>
 			<label index="emptyOptionLabel">Please Select...</label>
-			
+			<label index="not_enter_file">You did not select a file for ###1###</label>
+			<label index="wrong_filetype">Your file in ###1### does not match the allowed filetypes (###2###)</label>
+			<label index="wrong_filesize">Your file in ###1### is too large: max allowed size is (###2###) Bytes</label>
 		</languageKey>
 	</data>
 </T3locallang>
