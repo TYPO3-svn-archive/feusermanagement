@@ -94,7 +94,7 @@ class tx_feusermanagement_pi1 extends tslib_pibase {
 		}
 		$start_registration=false;
 		$checkInput=true;
-		t3lib_div::debug($_FILES);
+		
 
 		### SPRUNG AUF VORGÄNGERSEITE? ###
 		if ($this->piVars['backlinkToStep']&&$GLOBALS["TSFE"]->fe_user->getKey('ses','ccm_reg_step')) { ###SESSION EXISTIERT, UND ER WILL ZURÜCK ###
@@ -427,10 +427,11 @@ class tx_feusermanagement_pi1 extends tslib_pibase {
 				$tempFilename=$files[0];
 				$origFilename=$files[1];
 				$path=t3lib_div::getIndpEnv('TYPO3_DOCUMENT_ROOT').'/'.$this->uploadDir;
-				$newFilename=$path.$this->modelLib->getFreeFilename($path,$origFilename,$this->conf['config.']['upload_file_prefix']);
-				move_uploaded_file($tempFilename,$newFilename);
-				$map[$fe_name]=$this->modelLib->secureDataBeforeInsertUpdate($newFilename);
+				$newName=$this->modelLib->getFreeFilename($path,$origFilename,$this->conf['config.']['upload_file_prefix']);
+				move_uploaded_file($tempFilename,$path.$newName);
 				
+				$map[$fe_name]=$this->modelLib->secureDataBeforeInsertUpdate($this->uploadDir.$newName);
+				continue;
 			}
 			$map[$fe_name]=$this->modelLib->secureDataBeforeInsertUpdate($this->getValueFromSession($allFields[$field_name]));
 			if ($fe_name=='password') {
@@ -476,7 +477,7 @@ class tx_feusermanagement_pi1 extends tslib_pibase {
 		$zeit=time();
 
 		$sql="INSERT INTO fe_users (pid,usergroup,disable,tstamp,crdate".$keys.") VALUES('$pid','$group','$disabled','$zeit','$zeit'".$values.")";
-
+		
 		$GLOBALS['TYPO3_DB']->sql_query($sql);
 		$id=$GLOBALS['TYPO3_DB']->sql_insert_id ();
 		### HOOK afterregistration ###
