@@ -87,7 +87,6 @@ class tx_feusermanagement_pi1 extends tslib_pibase {
 		$this->pi_USER_INT_obj=1;
 
 		$this->init();
-
 		#if (!$this->baseURL) return 'config.baseURL not set';
 		if (!$this->templatefile) {
 			return 'Template File: "'.$this->templateFileName.'" not found';
@@ -417,7 +416,7 @@ class tx_feusermanagement_pi1 extends tslib_pibase {
 
 		$allFields=$this->modelLib->getAllFields($this);
 		$map=array();
-
+		$refindexArr=array();
 		$maparr=getTSValue('feuser_map',$this->conf);
 		foreach($maparr as $fe_name=>$field_name) {
 			$field=$allFields[$field_name];
@@ -431,6 +430,14 @@ class tx_feusermanagement_pi1 extends tslib_pibase {
 				move_uploaded_file($tempFilename,$path.$newName);
 				
 				$map[$fe_name]=$this->modelLib->secureDataBeforeInsertUpdate($this->uploadDir.$newName);
+				
+				$refindexArr[]=array(
+					'tablename'=>'fe_users',
+					'recuid'=>0,
+					'field'=>$fe_name,
+					'ref_table'=>'_FILE',
+					'ref_string'=>$map[$fe_name]
+				);
 				continue;
 			}
 			$map[$fe_name]=$this->modelLib->secureDataBeforeInsertUpdate($this->getValueFromSession($allFields[$field_name]));
@@ -480,6 +487,18 @@ class tx_feusermanagement_pi1 extends tslib_pibase {
 		
 		$GLOBALS['TYPO3_DB']->sql_query($sql);
 		$id=$GLOBALS['TYPO3_DB']->sql_insert_id ();
+		
+		## Setting Refindexes for uploaded Files ##
+		foreach ($refindexArr as $refArr) {
+			### NOT YET WORKING PROPERLY ###
+			/*
+			$refArr['recuid']=$id;
+			$refArr['hash']=md5(implode('///',$refArr));
+			$sql='INSERT INTO sys_refindex ('.implode(',',array_keys($refArr)).') VALUES("'.implode('","',$refArr).'")';
+			$GLOBALS['TYPO3_DB']->sql_query($sql);
+			*/
+		}
+		
 		### HOOK afterregistration ###
 		if (is_array($GLOBALS['TYPO3_CONF_VARS']['EXTCONF'][$this->extKey]['feuser_write'])) {
 			foreach($GLOBALS['TYPO3_CONF_VARS']['EXTCONF'][$this->extKey]['feuser_write'] as $userFunc) {
