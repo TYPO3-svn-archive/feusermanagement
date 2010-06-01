@@ -1,72 +1,76 @@
 plugin.tx_feusermanagement_pi1 {
-	config {
-		adminMail=dummy@youradmin.com
-		adminMailSubject=New Registration
-		userMailSubject=New Registration
-		mailFromEMail=noreply@yourwebsite.com
-		mailFromName=noreply
-		useMD5=1
-		requiredMarker=<sup><span style="color:#ff0000">*</span></sup>
-		
-		usersFreshPid=0
-		usersFreshGroup=0
-		usersConfirmedPid=0
-		usersConfirmedGroup=0
-		usersAdminConfirmedPid=0
-		usersAdminConfirmedGroup=0
-		
-		userConfirmation=1
-		adminConfirmation=0
-		#only works if confirmation is not required
-		autologin=1
-		autologinRedirPid=1
-		formNoSubmitAction=alert(alertMessage);
-		
-		template=EXT:feusermanagement/dummy_template.html
-	}
-	steps {
-		1.label=Step1
-		1.fields {
-			username {
-				required=1
-				type=text
-				label=LL_field_username
-				unique=1
-			}
-			password {
-				required=1
-				type=password
-				label=LL_field_password
-				validation=password
-				onBlurValidation=1
-			}
-			password2 {
-				required=1
-				type=password
-				label=LL_field_password2
-				equal=password
-				validation=password
-				jsvalidation=1
-			}
-			email {
-				required=1
-				type=text
-				label=LL_field_email
-				validation=email
-				jsvalidation=1
-				onBlurValidation=1
-			}
-			surname {
-				type=text
-				label=LL_field_surname
-			}
-		}
-	}
-	feuser_map {
-	    username=username
-	    surname=name
-	    password=password
-	    email=email
-	}
-
+  config {
+    adminMail=dummy@youradmin.com
+    adminMailSubject=New Registration
+    userMailSubject=New Registration
+    mailFromEMail=noreply@yourwebsite.com
+    mailFromName=noreply
+    useMD5=1
+    requiredMarker=<sup><span style="color:#ff0000">*</span></sup>
+     
+    usersFreshPid=0
+    usersFreshGroup=0
+    usersConfirmedPid=0
+    usersConfirmedGroup=0
+    usersAdminConfirmedPid=0
+    usersAdminConfirmedGroup=0
+     
+    userConfirmation=1
+    adminConfirmation=0
+    		#only works if confirmation is not required
+    autologin=1
+    autologinRedirPid=1
+    formNoSubmitAction=alert(alertMessage);
+     
+    template=EXT:feusermanagement/dummy_template.html
+  }
+  steps {
+    1.label=Step1
+    1.fields {
+      username {
+        required=1
+        type=text
+        label=Your username
+        unique=1
+      }
+      password {
+        required=1
+        type=password
+        label=LL_field_password
+        validation=password
+        onBlurValidation=1
+      }
+      password2 {
+        required=1
+        type=password
+        label=LL_field_password2
+        equal=password
+        validation=password
+        jsvalidation=1
+      }
+      email {
+        required=1
+        type=text
+        label=LL_field_email
+        validation=email
+        jsvalidation=1
+        onBlurValidation=1
+      }
+      surname {
+        type=text
+        label=Your Surname
+      }
+      meinbild {
+      	type=upload
+      }
+    }
+  }
+  feuser_map {
+    username=username
+    name=surname
+    image=meinbild
+    password=password
+    email=email
+  }
+   
 }
