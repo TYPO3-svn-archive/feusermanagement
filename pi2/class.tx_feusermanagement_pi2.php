@@ -295,6 +295,8 @@ class tx_feusermanagement_pi2 extends tslib_pibase {
 
 		$maparr=getTSValue('feuser_map',$this->conf);
 		foreach($maparr as $fe_name=>$field_name) {
+			$currField=$allFields[$field_name];
+			if ($fe_name=='password' && !($currField->required) && !$this->getValueFromSession($allFields[$field_name])) continue;
 			$map[$fe_name]=$this->modelLib->secureDataBeforeInsertUpdate($this->getValueFromSession($allFields[$field_name]));
 			if ($fe_name=='password') {
 				if (getTSValue('config.useMD5',$this->conf)) {
@@ -544,7 +546,7 @@ class tx_feusermanagement_pi2 extends tslib_pibase {
 						$pattern = '/'.$field->regExp.'/';
 						if (!preg_match($pattern,$this->piVars[$field->htmlID])) {
 							$valid=false;
-							$this->errMsg=$this->prepareMessage(array(pi_getLL('pattern_error','',FALSE),$field->label));
+							$this->errMsg=$this->prepareMessage(array($this->pi_getLL('pattern_error','',FALSE),$field->label));
 						}
 						break;
 				}

@@ -335,7 +335,7 @@ class tx_feusermanagement_pi1 extends tslib_pibase {
 						$pattern = '/'.$field->regExp.'/';
 						if (!preg_match($pattern,$this->piVars[$field->htmlID])) {
 							$valid=false;
-							$this->errMsg=$this->prepareMessage(array(pi_getLL('pattern_error','',FALSE),$field->label));
+							$this->errMsg=$this->prepareMessage(array($this->pi_getLL('pattern_error','',FALSE),$field->label));
 						}
 						break;
 				}

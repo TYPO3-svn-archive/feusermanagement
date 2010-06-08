@@ -41,7 +41,7 @@ class registration_view {
 						var regex = new RegExp("'.$reg.'");
 						if (!regex.test('.$field->htmlID.'_val)) {
 							doSubmit=false;
-							alertMessage="'.$obj->pi_getLL('email_error','',FALSE).'";
+							alertMessage="'.$obj->prepareMessage(array($obj->pi_getLL('pattern_error','',FALSE),$field->label)).'";
 						}
 
 					';
@@ -194,6 +194,7 @@ function '.$obj->prefixId.'_check_FormSubmit() {
 					break;
 				case "regExp":
 					$reg=str_replace(chr(92),chr(92).chr(92),$field->regExp);
+					if (!($falseAction)) $falseAction="alert('".$obj->prepareMessage(array($obj->pi_getLL('pattern_error','',FALSE),$field->label))."');";
 					$js.='
 					function test'.$field->htmlID.'(value) {
 					     var regex = new RegExp("'.$reg.'");
@@ -243,6 +244,8 @@ function '.$obj->prefixId.'_check_FormSubmit() {
 			#$stdWrapConf=getTSValue('value.stdWrap',$field->TS);
 			$stdWrapConf=getTSValue('value',$field->TS);
 			$field->value=$obj->cObj->stdWrap($field->value,$stdWrapConf);
+			
+			$field->label=$obj->cObj->stdWrap($field->label,$field->TS['label.']);
 			if ($field->type=='hidden') {
 				#t3lib_div::debug($field);
 				#t3lib_div::debug($stdWrapConf);
@@ -276,8 +279,8 @@ function '.$obj->prefixId.'_check_FormSubmit() {
 					break;
 				case "checkbox":
 					$checked="";
-					if ($obj->piVars[$field->htmlID]||($obj->getValueFromSession($field))) $checked="checked";
-					$temp='<input type="checkbox" name="'.$obj->prefixId.'['.$field->htmlID.']" id="'.$field->htmlID.'" value="1" "'.(($field->value)?'checked':'').'" title="'.$field->tooltip.'" '.$checked.' />';
+					if ($obj->piVars[$field->htmlID]||($obj->getValueFromSession($field))) $checked='checked="checked"';
+					$temp='<input type="checkbox" name="'.$obj->prefixId.'['.$field->htmlID.']" id="'.$field->htmlID.'" value="1"  title="'.$field->tooltip.'" '.$checked.' />';
 					break;
 				case "password":
 					if ($obj->prefixId!="tx_feregistrationprocess_pi3") $field->value="";
