@@ -4,6 +4,7 @@ class Field {
 		public $additionalData='';
 		public $equal='';
 		public $errField='';
+		public $errMessages=array();
 		public $fe_user='';
 		public $htmlID;
 		public $jsvalidation=0;
@@ -26,5 +27,6 @@ class Field {
 		public $regExp;
 		public $value;
 		public $includeEmptyOption;
+		public $emptyLabel='';
 	}
 ?>

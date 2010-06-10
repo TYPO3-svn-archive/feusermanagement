@@ -1,8 +1,8 @@
 <?php
 
-
-	class registration_model {
 	
+	class registration_model {
+		var $fields=array();
 		/**
 		 * [Describe function...]
 		 *
@@ -17,9 +17,15 @@
 			if (!is_array($TSfields)) return $fields;
 			
 			foreach($TSfields as $key=>$TSAttributes) {
-				#t3lib_div::debug($TSAttributes);
+				
 				$i++;
 				$name=$obj->removeDot($key);
+				if (array_key_exists($name,$this->fields)) {
+				
+					$fields[]=&$this->fields[$name];
+					continue;
+				}
+				
 				$htmlPrefix=($obj->conf['config.']['html_prefix'])?$obj->conf['config.']['html_prefix']:'ccm_reg_';
 				$field=new Field();
 				$field->name=$name;
@@ -62,7 +68,7 @@
 					}
 				}
 				
-
+				if (array_key_exists('emptyLabel',$TSAttributes)) $field->emptyLabel=$TSAttributes['emptyLabel'];
 				if (array_key_exists('fileSize',$TSAttributes)) $field->filesize=$TSAttributes['fileSize'];
 				if (array_key_exists('fileTypes',$TSAttributes)) $field->filesize=$TSAttributes['fileTypes'];
 				if (array_key_exists("required",$TSAttributes)) $field->required=$TSAttributes["required"];
@@ -111,8 +117,8 @@
 				$field->notCheckedMessage=($field->type=="checkbox")?("'".$obj->prepareMessage(array($obj->pi_getLL('email_error','',FALSE),$field->label))):$obj->prepareMessage(array($obj->pi_getLL('not_enter','',FALSE),$field->label));
 				$field->TS=$TSAttributes;
 				$field->tempID=$i;
-				
-				$fields[$name]=$field;
+				$this->fields[$name]=$field;
+				$fields[$name]=&$this->fields[$name];
 
 
 			}

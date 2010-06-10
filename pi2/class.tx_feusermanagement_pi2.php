@@ -48,6 +48,7 @@ class tx_feusermanagement_pi2 extends tslib_pibase {
 	var $templateFileName='';
 	var $templatefile='';
 	var $step=0;
+	var $errCount=0;
 	/**
 	 * The main method of the PlugIn
 	 *
@@ -492,8 +493,8 @@ class tx_feusermanagement_pi2 extends tslib_pibase {
 					}
 					*/
 					if (true||!$found) {
-						$this->errMsg=$this->prepareMessage(array($this->pi_getLL('not_enter','',FALSE),$field->label));
-						t3lib_div::debug(array($field,$this->errMsg));
+						$field->errMessages[]=$this->prepareMessage(array($this->pi_getLL('not_enter','',FALSE),$field->label));
+						
 						$valid=false;
 					}
 				}
@@ -511,7 +512,7 @@ class tx_feusermanagement_pi2 extends tslib_pibase {
 				}
 				if (!$unique) {
 					$valid=false;
-					$this->errMsg=$this->prepareMessage(array($this->pi_getLL('unique_error','',FALSE),$field->label));
+					$field->errMessages[]=$this->prepareMessage(array($this->pi_getLL('unique_error','',FALSE),$field->label));
 				}
 			}
 			if ($field->equal) {
@@ -520,7 +521,7 @@ class tx_feusermanagement_pi2 extends tslib_pibase {
 				$id2=$fields[$ref]->htmlID;
 				if ($this->piVars[$id]!=$this->piVars[$id2]) {
 					$valid=false;
-					$this->errMsg=$this->prepareMessage(array($this->pi_getLL('equal_error','',FALSE),$field->name,$fields[$ref]->name));
+					$field->errMessages[]=$this->prepareMessage(array($this->pi_getLL('equal_error','',FALSE),$field->name,$fields[$ref]->name));
 				}
 			}
 			if ($field->onBlurValidation) {
@@ -530,7 +531,7 @@ class tx_feusermanagement_pi2 extends tslib_pibase {
 						if (!preg_match($pattern,$this->piVars[$field->htmlID])) {
 
 							$valid=false;
-							$this->errMsg=$this->pi_getLL('email_error','',FALSE);
+							$field->errMessages[]=$this->pi_getLL('email_error','',FALSE);
 						}
 						break;
 					case "password":
@@ -538,7 +539,7 @@ class tx_feusermanagement_pi2 extends tslib_pibase {
 
 						if (!preg_match($pattern,$this->piVars[$field->htmlID])) {
 							$valid=false;
-							$this->errMsg=$this->pi_getLL('password_error','',FALSE);
+							$field->errMessages[]=$this->pi_getLL('password_error','',FALSE);
 						}
 						break;
 					case "regExp":
@@ -546,7 +547,7 @@ class tx_feusermanagement_pi2 extends tslib_pibase {
 						$pattern = '/'.$field->regExp.'/';
 						if (!preg_match($pattern,$this->piVars[$field->htmlID])) {
 							$valid=false;
-							$this->errMsg=$this->prepareMessage(array($this->pi_getLL('pattern_error','',FALSE),$field->label));
+							$field->errMessages[]=$this->prepareMessage(array($this->pi_getLL('pattern_error','',FALSE),$field->label));
 						}
 						break;
 				}

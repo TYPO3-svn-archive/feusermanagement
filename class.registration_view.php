@@ -161,7 +161,20 @@ function '.$obj->prefixId.'_check_FormSubmit() {
 				$js=t3lib_div::callUserFunction($userFunc, $params, $obj);
 			}
 		}
-		if ($field->onBlurValidation) {
+		if ($field->onBlurValidation&&$field->validation) {
+			if ($field->equal) {
+				/*
+				$equalField=$obj->modelLib->getField($field->equal,$obj);
+				if (!($falseAction)) $falseAction="alert(".$obj->prepareMessage(array($obj->pi_getLL('equal_error','',FALSE),$field->label,$equalField->label)).");";
+				$js.='
+				function test'.$field->htmlID.'(value) {
+					if (document.getElementById("'.$field->htmlID.'").value!=document.getElementById("'.$equalField->htmlID.'").value) {
+						'.$falseAction.'
+					}
+				}
+				';
+				*/
+			}
 			switch ($field->validation) {
 				case "email":
 					if (!($falseAction)) $falseAction="alert(".$obj->pi_getLL('email_error_value_js','',FALSE).");";
@@ -233,8 +246,10 @@ function '.$obj->prefixId.'_check_FormSubmit() {
 	 * @param	[type]		$obj: ...
 	 * @return	[type]		...
 	 */
-	function fillMarkers($allFields,$markerArr,$obj) {
+	function fillMarkers(&$allFields,$markerArr,$obj) {
+		
 		foreach($allFields as $field) {
+			
 			$temp='';
 			$onBlur='';
 			if (!$field->value) {
@@ -261,7 +276,11 @@ function '.$obj->prefixId.'_check_FormSubmit() {
 					break;
 				case "dropdown":
 					$temp='<select name="'.$obj->prefixId.'['.$field->htmlID.']" id="'.$field->htmlID.'" title="'.$field->tooltip.'">';
-					if ($field->includeEmptyOption) $temp.='<option value="0">'.$obj->pi_getLL('emptyOptionLabel').'</option>';
+					if ($field->includeEmptyOption) {
+						$emptyLabel=$obj->pi_getLL('emptyOptionLabel');
+						if ($field->emptyLabel) $emptyLabel=$field->emptyLabel;
+						$temp.='<option value="0">'.$emptyLabel.'</option>';
+					}
 					foreach ($field->list as $arr) {
 						$selected=($field->value==$arr['value'])?'selected="selected"':'';
 						$temp.='<option value="'.$arr["value"].'" '.$selected.'>'.$obj->getString($arr["label"]).'</option>';
@@ -295,7 +314,37 @@ function '.$obj->prefixId.'_check_FormSubmit() {
 			$markerArr["###".$field->markerName."###"]=$temp;
 			$markerArr["###".$field->markerName."_LABEL###"]=$field->label;
 			$markerArr["###".$field->markerName."_REQUIRED###"]=($field->required)?$obj->requiredMarker:"";
-			$markerArr["###".$field->markerName."_ERROR###"]="<div id='".$field->errField."'></div>";
+			
+			$markerArr["###".$field->markerName."_ERROR###"]='';
+			$globalErrMsgCount=array_key_exists('globalErrMsgCount',$obj->conf['config.'])?getTSValue('config.globalErrMsgCount',$obj->conf):5;
+			
+			if (count($field->errMessages) && $globalErrMsgCount>$obj->errCount) {
+				$obj->errCount++;
+				$errString='';
+				if (array_key_exists('errMsgCount',$field->TS)) {
+					$errCount=$field->TS['errMsgCount'];
+				} else {
+					if (array_key_exists('errMsgCount',$obj->conf['config.'])) {
+						$errCount=getTSValue('config.errMsgCount',$obj->conf);
+					} else {
+						$errCount=1;
+					}
+				}
+				
+				$errCount=(int)$errCount;
+				for ($i=0;$i<count($field->errMessages);$i++) {
+					if ($i<$errCount) {
+						$msg=$field->errMessages[$i];
+						$wrapConf=(is_array($field->TS['errMsgItemWrap.']))?$field->TS['errMsgItemWrap.']:getTSValue('config.errMsgItemWrap.',$obj->conf);
+						$errString.=$obj->cObj->stdWrap($msg,$wrapConf);
+					}
+				}
+				
+				$wrapConf=(is_array($field->TS['errMsgWrap.']))?$field->TS['errMsgWrap.']:getTSValue('config.errMsgWrap.',$obj->conf);
+				
+				$errString=$obj->cObj->stdWrap($errString,$wrapConf);
+				$markerArr['###'.$field->markerName.'_ERROR###']='<div id="'.$field->errField.'">'.$errString.'</div>';
+			}
 			$htmlFields[$field->markerName]=$temp;
 
 			$value=$obj->getValueFromSession($field);

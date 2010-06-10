@@ -56,6 +56,7 @@ class tx_feusermanagement_pi1 extends tslib_pibase {
 	var $baseURL='';
 	var $templateFileName='';
 	var $uploadDir='uploads/';
+	var $errCount=0;
 
 	function init() {
 		$this->baseURL=getTSValue('config.baseURL',$GLOBALS['TSFE']->tmpl->setup);
@@ -129,6 +130,7 @@ class tx_feusermanagement_pi1 extends tslib_pibase {
 
 			}
 		}
+		
 		$step=$GLOBALS["TSFE"]->fe_user->getKey('ses','ccm_reg_step');
 		$this->currStep=$step;
 		### CHECK FOR REGISTRATION FINALIZED ###
@@ -173,13 +175,13 @@ class tx_feusermanagement_pi1 extends tslib_pibase {
 		$markerArr=array();
 		$htmlFields=array();
 		$allFields=$this->modelLib->getAllFields($this);
-
+		
 		$markerArr["###SUBMIT###"]='<input type="submit" value="'.$this->pi_getLL('submit_label','',FALSE).'" />';
 		$markerArr["###STEP###"]=$step." / ".$lastStep;
 
 			###OLD VALUES###
 		$markerArr=$this->viewLib->fillMarkers($allFields,$markerArr,$this);
-
+		
 			###ERROR_HTML###
 		$errorHTML=str_replace("###ERROR_MSG###",$this->errMsg,$errorTempl);
 		$markerArr["###ERROR###"]=($this->errMsg)?$errorHTML:"";
@@ -241,6 +243,7 @@ class tx_feusermanagement_pi1 extends tslib_pibase {
 		$fields=$this->modelLib->getCurrentFields($this->conf["steps."][$step."."],$this);
 		$valid=true;
 		foreach($fields as $field) {
+			
 			if ($field->required) {
 				$name=$field->name;
 				$id=$field->htmlID;
@@ -250,11 +253,15 @@ class tx_feusermanagement_pi1 extends tslib_pibase {
 							
 						} else {
 							$valid=false;
-							$this->errMsg=$this->prepareMessage(array($this->pi_getLL('not_enter_file','',FALSE),$field->label));
+							#$this->errMsg=$this->prepareMessage(array($this->pi_getLL('not_enter_file','',FALSE),$field->label));
+							$field->errMessages[]=$this->prepareMessage(array($this->pi_getLL('not_enter_file','',FALSE),$field->label));
+							
 						}
 					} else {
+						
 						$valid=$this->modelLib->getValueFromSession($field->htmlId,$this);
-						$this->errMsg=$this->prepareMessage(array($this->pi_getLL('not_enter','',FALSE),$field->label));
+						$field->errMessages[]=$this->prepareMessage(array($this->pi_getLL('not_enter','',FALSE),$field->label));
+						
 					}
 				}
 			}
@@ -266,12 +273,12 @@ class tx_feusermanagement_pi1 extends tslib_pibase {
 					$fileext=substr($filename,strrpos($filename,'.'));
 					if (!in_array($fileext,$allowedExt)) {
 						$valid=false;
-						$this->errMsg=$this->prepareMessage(array($this->pi_getLL('wrong_filetype','',FALSE),$field->label,implode(',',$allowedExt)));
+						$field->errMessages[]=$this->prepareMessage(array($this->pi_getLL('wrong_filetype','',FALSE),$field->label,implode(',',$allowedExt)));
 					}
 				}
 				if ($size>$field->filesize) {
 					$valid=false;
-					$this->errMsg=$this->prepareMessage(array($this->pi_getLL('wrong_filesize','',FALSE),$field->label,$field->filesize));
+					$field->errMessages[]=$this->prepareMessage(array($this->pi_getLL('wrong_filesize','',FALSE),$field->label,$field->filesize));
 				}
 				if (!isset($_FILES['tx_feusermanagement_pi1']['tmp_name'][$field->htmlID])) $valid=false;
 				if (strpos($filename,'|')!==false) $valid=false;
@@ -299,7 +306,7 @@ class tx_feusermanagement_pi1 extends tslib_pibase {
 				}
 				if (!$unique) {
 					$valid=false;
-					$this->errMsg=$this->prepareMessage(array($this->pi_getLL('unique_error','',FALSE),$field->label));
+					$field->errMessages[]=$this->prepareMessage(array($this->pi_getLL('unique_error','',FALSE),$field->label));
 				}
 			}
 
@@ -309,7 +316,7 @@ class tx_feusermanagement_pi1 extends tslib_pibase {
 				$id2=$fields[$ref]->htmlID;
 				if ($this->piVars[$id]!=$this->piVars[$id2]) {
 					$valid=false;
-					$this->errMsg=$this->prepareMessage(array($this->pi_getLL('equal_error','',FALSE),$field->label,$fields[$ref]->label));
+					$field->errMessages[]=$this->prepareMessage(array($this->pi_getLL('equal_error','',FALSE),$field->label,$fields[$ref]->label));
 				}
 			}
 			if ($field->validation) {
@@ -319,7 +326,7 @@ class tx_feusermanagement_pi1 extends tslib_pibase {
 						if (!preg_match($pattern,$this->piVars[$field->htmlID])) {
 
 							$valid=false;
-							$this->errMsg=$this->pi_getLL('email_error','',FALSE);
+							$field->errMessages[]=$this->pi_getLL('email_error','',FALSE);
 						}
 						break;
 					case "password":
@@ -327,7 +334,7 @@ class tx_feusermanagement_pi1 extends tslib_pibase {
 
 						if (!preg_match($pattern,$this->piVars[$field->htmlID])) {
 							$valid=false;
-							$this->errMsg=$this->pi_getLL('password_error','',FALSE);
+							$field->errMessages[]=$this->pi_getLL('password_error','',FALSE);
 						}
 						break;
 					case "regExp":
@@ -335,7 +342,7 @@ class tx_feusermanagement_pi1 extends tslib_pibase {
 						$pattern = '/'.$field->regExp.'/';
 						if (!preg_match($pattern,$this->piVars[$field->htmlID])) {
 							$valid=false;
-							$this->errMsg=$this->prepareMessage(array($this->pi_getLL('pattern_error','',FALSE),$field->label));
+							$field->errMessages[]=$this->prepareMessage(array($this->pi_getLL('pattern_error','',FALSE),$field->label));
 						}
 						break;
 				}

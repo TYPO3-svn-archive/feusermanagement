@@ -39,11 +39,13 @@
 	 * @return	[type]		...
 	 */
 	function getTSValue($key,$conf) {
+		
 		$subkeys=explode(".",$key);
 		$arr=$conf;
 		$max=count($subkeys);
 		for($i=0;$i<$max;$i++) {
 			$key=$subkeys[$i];
+			if ($key=='') return $arr;
 			if ($i<($max-1)) $key.='.';
 			if (array_key_exists($key,$arr)) {
 				$arr=$arr[$key];
