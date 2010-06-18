@@ -276,9 +276,9 @@ class tx_feusermanagement_pi2 extends tslib_pibase {
 		}
 	}
 	function getValuesFromUserMapString($string) {
-		t3lib_div::debug(array($string));
+		
 		$allFields=$this->modelLib->getAllFields($this);
-		t3lib_div::debug($allFields);
+		
 		$arr=explode('+',$string);
 		$content='';
 		foreach($arr as $key) {
@@ -293,7 +293,7 @@ class tx_feusermanagement_pi2 extends tslib_pibase {
 				}
 			}
 		}
-		t3lib_div::debug(array($content));
+		
 		return $content;
 	}
 	/**
