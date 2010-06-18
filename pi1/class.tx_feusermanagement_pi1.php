@@ -306,7 +306,27 @@ class tx_feusermanagement_pi1 extends tslib_pibase {
 	 * @param	[type]		$field: ...
 	 * @return	[type]		...
 	 */
+	function getValuesFromUserMapString($string) {
+		
+		$allFields=$this->modelLib->getAllFields($this);
+		$arr=explode('+',$string);
+		$content='';
+		foreach($arr as $key) {
+			if (substr($key,0,1)=='"' && substr($key,strlen($key)-1)=='"') {
+				$content.=mysql_real_escape_string(substr($key,1,strlen($key)-2));
+			} else {
+				if (array_key_exists($key,$allFields)) {
+					$content.=$this->getValueFromSession($allFields[$key]);
+				}
+				else {
+					return 'invalid configuration';
+				}
+			}
+		}
+		return $content;
+	}
 	function getValueFromSession($field) {
+		
 		$sesVal=$this->modelLib->getValueFromSession($field->name,$this);
 		#$sesVal=$GLOBALS["TSFE"]->fe_user->getKey('ses',$this->prefixId.$field->name);
 		if ($sesVal) return $sesVal;
@@ -328,7 +348,7 @@ class tx_feusermanagement_pi1 extends tslib_pibase {
 		foreach($maparr as $fe_name=>$field_name) {
 			$field=$allFields[$field_name];
 			
-			if ($field->type=='upload') {
+			if (is_object($field)&&$field->type=='upload') {
 				$files=explode(chr(1),$this->getValueFromSession($allFields[$field_name]));
 				$tempFilename=$files[0];
 				$origFilename=$files[1];
@@ -347,7 +367,7 @@ class tx_feusermanagement_pi1 extends tslib_pibase {
 				);
 				continue;
 			}
-			$map[$fe_name]=$this->modelLib->secureDataBeforeInsertUpdate($this->getValueFromSession($allFields[$field_name]));
+			$map[$fe_name]=$this->modelLib->secureDataBeforeInsertUpdate($this->getValuesFromUserMapString($field_name));
 			if ($fe_name=='password') {
 				$this->modelLib->saveValueToSession('password',$map['password'],$this);
 				#$GLOBALS["TSFE"]->fe_user->setKey('ses',$this->prefixId.'password',$map['password']);

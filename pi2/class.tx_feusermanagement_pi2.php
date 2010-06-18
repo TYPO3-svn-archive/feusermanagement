@@ -275,7 +275,27 @@ class tx_feusermanagement_pi2 extends tslib_pibase {
 			}
 		}
 	}
-
+	function getValuesFromUserMapString($string) {
+		t3lib_div::debug(array($string));
+		$allFields=$this->modelLib->getAllFields($this);
+		t3lib_div::debug($allFields);
+		$arr=explode('+',$string);
+		$content='';
+		foreach($arr as $key) {
+			if (substr($key,0,1)=='"' && substr($key,strlen($key)-1)=='"') {
+				$content.=mysql_real_escape_string(substr($key,1,strlen($key)-2));
+			} else {
+				if (array_key_exists($key,$allFields)) {
+					$content.=$this->getValueFromSession($allFields[$key]);
+				}
+				else {
+					return 'invalid configuration';
+				}
+			}
+		}
+		t3lib_div::debug(array($content));
+		return $content;
+	}
 	/**
 	 * [Describe function...]
 	 *
@@ -283,14 +303,14 @@ class tx_feusermanagement_pi2 extends tslib_pibase {
 	 */
 	function updateFEUser() {
 		$allFields=$this->modelLib->getAllFields($this);
-
+		
 		$map=array();
 
 		$maparr=getTSValue('feuser_map',$this->conf);
 		foreach($maparr as $fe_name=>$field_name) {
 			$currField=$allFields[$field_name];
 			if ($fe_name=='password' && !($currField->required) && !$this->getValueFromSession($allFields[$field_name])) continue;
-			$map[$fe_name]=$this->modelLib->secureDataBeforeInsertUpdate($this->getValueFromSession($allFields[$field_name]));
+			$map[$fe_name]=$this->modelLib->secureDataBeforeInsertUpdate($this->getValuesFromUserMapString($field_name));
 			if ($fe_name=='password') {
 				if (getTSValue('config.useMD5',$this->conf)) {
 					$map['password']=md5($map['password']);
@@ -302,8 +322,9 @@ class tx_feusermanagement_pi2 extends tslib_pibase {
 			$updateStr.=(strlen($updateStr))?',':'';
 			$updateStr.=$key.'="'.$value.'"';
 		}
-
+		
 		$sql="UPDATE fe_users SET ".$updateStr." WHERE uid='".$this->feuser_uid."'";
+		t3lib_div::debug($sql);
 		$GLOBALS['TYPO3_DB']->sql_query($sql);
 
 		if (is_array($GLOBALS['TYPO3_CONF_VARS']['EXTCONF'][$this->extKey]['feuser_write'])) {

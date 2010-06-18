@@ -101,10 +101,7 @@
 			$fields=$obj->modelLib->getAllFields($obj);
 			$ref=$field->equal;
 			$id2=$fields[$ref]->htmlID;
-			t3lib_div::debug(array($field,$fields[$ref]));
-			t3lib_div::debug($obj->piVars);
-			t3lib_div::debug($ref);
-			t3lib_div::debug($fields);
+			
 			if ($obj->piVars[$field->htmlID]!=$obj->piVars[$id2]) {
 				$valid=false;
 				$field->errMessages[]=$obj->prepareMessage(array($obj->pi_getLL('equal_error','',FALSE),$field->label,$fields[$ref]->label));

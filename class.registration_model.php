@@ -19,7 +19,7 @@
 			return $map;
 		}
 		function getCurrentFields($TSstep,$obj,$load_data=0) {
-			t3lib_div::debug('Call Function');
+			
 			#t3lib_div::debug($obj);
 			$i=0;
 			$TSfields=$TSstep["fields."];
