@@ -367,7 +367,7 @@ class tx_feusermanagement_pi1 extends tslib_pibase {
 				);
 				continue;
 			}
-			$map[$fe_name]=$this->modelLib->secureDataBeforeInsertUpdate($this->getValuesFromUserMapString($field_name));
+			$map[$fe_name]=$this->modelLib->secureDataBeforeInsertUpdate($this->getValuesFromUserMapString($field_name),$this);
 			if ($fe_name=='password') {
 				$this->modelLib->saveValueToSession('password',$map['password'],$this);
 				#$GLOBALS["TSFE"]->fe_user->setKey('ses',$this->prefixId.'password',$map['password']);

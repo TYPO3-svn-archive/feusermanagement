@@ -182,7 +182,11 @@
 		function clearValuesInSession($obj) {
 			$GLOBALS['TSFE']->fe_user->setKey('ses',$obj->prefixId,false);
 		}
-		function secureDataBeforeInsertUpdate($value) {
+		function secureDataBeforeInsertUpdate($value,$obj=null) {
+			if (is_object($obj)) {
+				if ($obj->conf['config.']['utf8_encodeBeforeInsert']) $value=utf8_encode($obj);
+				if ($obj->conf['config.']['utf8_decodeBeforeInsert']) $value=utf8_decode($obj);
+			}
 			$retValue=mysql_real_escape_string(htmlentities($value));
 			if (is_array($GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['feusermanagement']['secure_data'])) {
 				foreach($GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['feusermanagement']['secure_data'] as $userFunc) {

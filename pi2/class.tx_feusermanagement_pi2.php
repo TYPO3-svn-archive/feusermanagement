@@ -310,7 +310,7 @@ class tx_feusermanagement_pi2 extends tslib_pibase {
 		foreach($maparr as $fe_name=>$field_name) {
 			$currField=$allFields[$field_name];
 			if ($fe_name=='password' && !($currField->required) && !$this->getValueFromSession($allFields[$field_name])) continue;
-			$map[$fe_name]=$this->modelLib->secureDataBeforeInsertUpdate($this->getValuesFromUserMapString($field_name));
+			$map[$fe_name]=$this->modelLib->secureDataBeforeInsertUpdate($this->getValuesFromUserMapString($field_name),$this);
 			if ($fe_name=='password') {
 				if (getTSValue('config.useMD5',$this->conf)) {
 					$map['password']=md5($map['password']);
@@ -324,7 +324,7 @@ class tx_feusermanagement_pi2 extends tslib_pibase {
 		}
 		
 		$sql="UPDATE fe_users SET ".$updateStr." WHERE uid='".$this->feuser_uid."'";
-		t3lib_div::debug($sql);
+		
 		$GLOBALS['TYPO3_DB']->sql_query($sql);
 
 		if (is_array($GLOBALS['TYPO3_CONF_VARS']['EXTCONF'][$this->extKey]['feuser_write'])) {
