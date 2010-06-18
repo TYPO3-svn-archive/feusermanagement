@@ -27,6 +27,7 @@ require_once(t3lib_extMgm::extPath('feusermanagement') . 'class.Field.php');
 require_once(t3lib_extMgm::extPath('feusermanagement') . 'class.registration_model.php');
 require_once(t3lib_extMgm::extPath('feusermanagement') . 'class.registration_view.php');
 require_once(t3lib_extMgm::extPath('feusermanagement') . 'lib_general.php');
+require_once(t3lib_extMgm::extPath('feusermanagement') . 'class.registration_validation.php');
 
 /**
  * Plugin 'ccm_registration_edit' for the 'fe_registration_process' extension.
@@ -45,6 +46,7 @@ class tx_feusermanagement_pi2 extends tslib_pibase {
 	var $requiredMarker='';
 	var $modelLib=null;
 	var $viewLib=null;
+	var $validateLib=null;
 	var $templateFileName='';
 	var $templatefile='';
 	var $step=0;
@@ -62,7 +64,7 @@ class tx_feusermanagement_pi2 extends tslib_pibase {
 		$this->modelLib=t3lib_div::makeInstance('registration_model');
 		$this->viewLib=t3lib_div::makeInstance('registration_view');
 		$this->feuser_uid=$GLOBALS['TSFE']->fe_user->user['uid'];
-
+		$this->validateLib=t3lib_div::makeInstance('registration_validation');
 		$this->templateFileName=getTSValue('config.template',$this->conf);
 		$this->templatefile = $this->cObj->fileResource($this->templateFileName);
 	}
@@ -124,10 +126,10 @@ class tx_feusermanagement_pi2 extends tslib_pibase {
 		$this->step=$step;
 		### GET TEMPLATES ###
 		$template=$this->cObj->getSubpart($this->templatefile,"STEP_".$step);
-		$errorTempl=$this->cObj->getSubpart($this->templatefile,"ERROR_PART");
+		#$errorTempl=$this->cObj->getSubpart($this->templatefile,"ERROR_PART");
 		$finalTempl=$this->cObj->getSubpart($this->templatefile,"FINAL_SCREEN");
 		$deleteTempl=$this->cObj->getSubpart($this->templatefile,"DELETED");
-		$errorHTML=str_replace("ERROR_MSG",$this->errMsg,$errorTempl);
+		#$errorHTML=str_replace("ERROR_MSG",$this->errMsg,$errorTempl);
 		$fields=$this->modelLib->getCurrentFields($this->conf["steps."][$step."."],$this,1);
 
 		### HOOK processFields ###
@@ -186,8 +188,8 @@ class tx_feusermanagement_pi2 extends tslib_pibase {
 
 
 			###ERROR_HTML###
-		$errorHTML=str_replace("###ERROR_MSG###",$this->errMsg,$errorTempl);
-		$markerArr["###ERROR###"]=($this->errMsg)?$errorHTML:"";
+		#$errorHTML=str_replace("###ERROR_MSG###",$this->errMsg,$errorTempl);
+		#$markerArr["###ERROR###"]=($this->errMsg)?$errorHTML:"";
 			### NAVIGATION BAR ###
 		$navigation="";
 		$backLinks=$this->getBacklinks($step);
@@ -235,22 +237,7 @@ class tx_feusermanagement_pi2 extends tslib_pibase {
 
 	
 
-	/**
-	 * [Describe function...]
-	 *
-	 * @param	[type]		$field: ...
-	 * @return	[type]		...
-	 */
-	function get_fe_fieldname($field) {
-		if (is_array($this->conf["feuser_map."])) {
-			foreach($this->conf["feuser_map."] as $key=>$value) {
-				if($value==$field->dbName) {
-					return $key;
-				}
-			}
-		}
-		return "";
-	}
+	
 
 	/**
 	 * [Describe function...]
@@ -259,15 +246,13 @@ class tx_feusermanagement_pi2 extends tslib_pibase {
 	 * @return	[type]		...
 	 */
 	function writeLastStepToSession($step) {
-
 		$fields=$this->modelLib->getCurrentFields($this->conf["steps."][$step."."],$this);
 		foreach($fields as $field) {
 
-			$name=$field->dbName;
 			$id=$field->htmlID;
 			if (isset($this->piVars[$id])) {
 				$value=$this->piVars[$id];
-				#$GLOBALS["TSFE"]->fe_user->setKey('ses',$this->prefixId.$field->name,$value);
+				
 				$this->modelLib->saveValueToSession($field->name,$value,$this);
 				### HOOK afterValueInsert ###
 				if (is_array($GLOBALS['TYPO3_CONF_VARS']['EXTCONF'][$this->extKey]['afterValueInsert_pi2'])) {
@@ -280,7 +265,14 @@ class tx_feusermanagement_pi2 extends tslib_pibase {
 					}
 				}
 			}
-
+			if ($field->type=='upload') {
+				$tmpFile=$_FILES['tx_feusermanagement_pi1']['tmp_name'][$field->htmlID];
+				$origFile=$_FILES['tx_feusermanagement_pi1']['name'][$field->htmlID];
+				
+				$value=$tmpFile.chr(1).$origFile;
+				$this->modelLib->saveValueToSession($field->name,$value,$this);
+				
+			}
 		}
 	}
 
@@ -394,13 +386,18 @@ class tx_feusermanagement_pi2 extends tslib_pibase {
 	 * @return	[type]		...
 	 */
 	function getValueFromSession($field) {
-		#$sesVal=$GLOBALS["TSFE"]->fe_user->getKey('ses',$this->prefixId.$field->name);
 		$sesVal=$this->modelLib->getValueFromSession($field->name,$this);
 		if ($sesVal) return $sesVal;
 		if ($field->value) return $field->value; //Wert der übers Typoscript übergeben wurde, für z.B. Hidden-Fields
 
-		// TODO: Aus der fe_user tablle wert auslesen
-
+		$map=$this->modelLib->getDataMap($this);
+		if ($fe_field=$map[$field->name]) {
+			$sql='SELECT '.$fe_field.' FROM fe_users WHERE uid='.$GLOBALS['TSFE']->fe_user->user['uid'];
+			$res=$GLOBALS['TYPO3_DB']->sql_query($sql);
+			if ($row = $GLOBALS['TYPO3_DB']->sql_fetch_assoc($res)) {
+				return $row[$fe_field];
+			}
+		}
 		return '';
 	}
 
@@ -477,81 +474,7 @@ class tx_feusermanagement_pi2 extends tslib_pibase {
 		$fields=$this->modelLib->getCurrentFields($this->conf["steps."][$step."."],$this);
 		$valid=true;
 		foreach($fields as $field) {
-			if ($field->required) {
-				$name=$field->name;
-				$id=$field->htmlID;
-				if (!(isset($this->piVars[$id]) && ($this->piVars[$id]))) {
-					/*
-					$value=$_POST[$id];
-					$valueEsc=mysql_real_escape_string($value);
-					$dbNameEsc=mysql_real_escape_string($field->dbName);
-					$sql="SELECT * FROM tx_feregistrationprocess_user_info WHERE type='".$dbNameEsc."' AND content='".$valueEsc."'";
-					$res=$GLOBALS['TYPO3_DB']->sql_query($sql);
-					$found=false;
-					while ($row=$GLOBALS['TYPO3_DB']->sql_fetch_assoc($res)) {
-						$found=true;
-					}
-					*/
-					if (true||!$found) {
-						$field->errMessages[]=$this->prepareMessage(array($this->pi_getLL('not_enter','',FALSE),$field->label));
-						
-						$valid=false;
-					}
-				}
-
-			}
-
-			if ($field->unique) {
-				$id=$field->htmlID;
-				$value=mysql_real_escape_string($this->piVars[$id]);
-				$sql='SELECT * FROM fe_users WHERE '.$field->fe_user.'="'.$value.'" AND NOT uid="'.$this->feuser_uid.'"';
-				$res=$GLOBALS['TYPO3_DB']->sql_query($sql);
-				$unique=true;
-				while ($row=$GLOBALS['TYPO3_DB']->sql_fetch_assoc($res)) {
-					$unique=false;
-				}
-				if (!$unique) {
-					$valid=false;
-					$field->errMessages[]=$this->prepareMessage(array($this->pi_getLL('unique_error','',FALSE),$field->label));
-				}
-			}
-			if ($field->equal) {
-				$ref=$field->equal;
-				$id=$field->htmlID;
-				$id2=$fields[$ref]->htmlID;
-				if ($this->piVars[$id]!=$this->piVars[$id2]) {
-					$valid=false;
-					$field->errMessages[]=$this->prepareMessage(array($this->pi_getLL('equal_error','',FALSE),$field->name,$fields[$ref]->name));
-				}
-			}
-			if ($field->onBlurValidation) {
-				switch ($field->validation) {
-					case "email":
-						$pattern = '/'.$this->viewLib->emailReg.'/';
-						if (!preg_match($pattern,$this->piVars[$field->htmlID])) {
-
-							$valid=false;
-							$field->errMessages[]=$this->pi_getLL('email_error','',FALSE);
-						}
-						break;
-					case "password":
-						$pattern='/'.$this->viewLib->passwordReg.'/';
-
-						if (!preg_match($pattern,$this->piVars[$field->htmlID])) {
-							$valid=false;
-							$field->errMessages[]=$this->pi_getLL('password_error','',FALSE);
-						}
-						break;
-					case "regExp":
-
-						$pattern = '/'.$field->regExp.'/';
-						if (!preg_match($pattern,$this->piVars[$field->htmlID])) {
-							$valid=false;
-							$field->errMessages[]=$this->prepareMessage(array($this->pi_getLL('pattern_error','',FALSE),$field->label));
-						}
-						break;
-				}
-			}
+			$valid=$this->validateLib->validateField($field,$this)&&$valid;
 		}
 		### HOOK stepValidation ###
 		if (is_array($GLOBALS['TYPO3_CONF_VARS']['EXTCONF'][$this->extKey]['stepValidation'])) {

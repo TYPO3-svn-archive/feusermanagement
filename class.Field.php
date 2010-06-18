@@ -28,5 +28,6 @@ class Field {
 		public $value;
 		public $includeEmptyOption;
 		public $emptyLabel='';
+		public $dbName='';
 	}
 ?>

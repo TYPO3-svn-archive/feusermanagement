@@ -27,6 +27,7 @@ require_once(t3lib_extMgm::extPath('feusermanagement') . 'class.Field.php');
 require_once(t3lib_extMgm::extPath('feusermanagement') . 'class.registration_model.php');
 require_once(t3lib_extMgm::extPath('feusermanagement') . 'class.registration_view.php');
 require_once(t3lib_extMgm::extPath('feusermanagement') . 'lib_general.php');
+require_once(t3lib_extMgm::extPath('feusermanagement') . 'class.registration_validation.php');
 
 /**
  * Plugin 'ccm_registration' for the 'feusermanagement' extension.
@@ -45,6 +46,7 @@ class tx_feusermanagement_pi1 extends tslib_pibase {
 	var $pi_checkCHash = true;
 	var $modelLib=null;
 	var $viewLib=null;
+	var $validateLib=null;
 	var $userMailTemplate='';
 	var $adminMailTemplate='';
 	var $userMailNotifyTemplate='';
@@ -63,6 +65,7 @@ class tx_feusermanagement_pi1 extends tslib_pibase {
 		$this->requiredMarker=getTSValue('config.requiredMarker',$this->conf);
 		$this->modelLib=t3lib_div::makeInstance('registration_model');
 		$this->viewLib=t3lib_div::makeInstance('registration_view');
+		$this->validateLib=t3lib_div::makeInstance('registration_validation');
 		if (getTSValue('config.userConfirmation',$this->conf)) $this->requireUserConfirm=1;
 		if (getTSValue('config.adminConfirmation',$this->conf)) $this->requireAdminConfirm=1;
 		$this->templateFileName=getTSValue('config.template',$this->conf);
@@ -143,9 +146,9 @@ class tx_feusermanagement_pi1 extends tslib_pibase {
 		### GET TEMPLATES ###
 
 		$template=$this->cObj->getSubpart($this->templatefile,'###STEP_'.$step.'###');
-		$errorTempl=$this->cObj->getSubpart($this->templatefile,'###ERROR_PART###');
+		#$errorTempl=$this->cObj->getSubpart($this->templatefile,'###ERROR_PART###');
 		$finalTempl=$this->cObj->getSubpart($this->templatefile,'###FINAL_SCREEN###');
-		$errorHTML=str_replace('###ERROR_MSG###',$this->errMsg,$errorTempl);
+		#$errorHTML=str_replace('###ERROR_MSG###',$this->errMsg,$errorTempl);
 		$fields=$this->modelLib->getCurrentFields($this->conf['steps.'][$step.'.'],$this);
 
 		### HOOK processFields ###
@@ -183,8 +186,8 @@ class tx_feusermanagement_pi1 extends tslib_pibase {
 		$markerArr=$this->viewLib->fillMarkers($allFields,$markerArr,$this);
 		
 			###ERROR_HTML###
-		$errorHTML=str_replace("###ERROR_MSG###",$this->errMsg,$errorTempl);
-		$markerArr["###ERROR###"]=($this->errMsg)?$errorHTML:"";
+		#$errorHTML=str_replace("###ERROR_MSG###",$this->errMsg,$errorTempl);
+		#$markerArr["###ERROR###"]=($this->errMsg)?$errorHTML:"";
 			### NAVIGATION BAR ###
 		$navigation="";
 		$backLinks=$this->getBacklinks($step);
@@ -243,110 +246,7 @@ class tx_feusermanagement_pi1 extends tslib_pibase {
 		$fields=$this->modelLib->getCurrentFields($this->conf["steps."][$step."."],$this);
 		$valid=true;
 		foreach($fields as $field) {
-			
-			if ($field->required) {
-				$name=$field->name;
-				$id=$field->htmlID;
-				if (!(isset($this->piVars[$id]) && ($this->piVars[$id]))) {
-					if ($field->type=='upload') {
-						if (isset($_FILES[$this->prefixId]['name'][$field->htmlID])) {
-							
-						} else {
-							$valid=false;
-							#$this->errMsg=$this->prepareMessage(array($this->pi_getLL('not_enter_file','',FALSE),$field->label));
-							$field->errMessages[]=$this->prepareMessage(array($this->pi_getLL('not_enter_file','',FALSE),$field->label));
-							
-						}
-					} else {
-						
-						$valid=$this->modelLib->getValueFromSession($field->htmlId,$this);
-						$field->errMessages[]=$this->prepareMessage(array($this->pi_getLL('not_enter','',FALSE),$field->label));
-						
-					}
-				}
-			}
-			if ($field->type=='upload') {
-				$size=$_FILES['tx_feusermanagement_pi1']['size'][$field->htmlID];
-				$filename=$_FILES['tx_feusermanagement_pi1']['name'][$field->htmlID];
-				$allowedExt=t3lib_div::trimExplode(',',$field->filetypes);
-				if (!in_array('*',$allowedExt)) {
-					$fileext=substr($filename,strrpos($filename,'.'));
-					if (!in_array($fileext,$allowedExt)) {
-						$valid=false;
-						$field->errMessages[]=$this->prepareMessage(array($this->pi_getLL('wrong_filetype','',FALSE),$field->label,implode(',',$allowedExt)));
-					}
-				}
-				if ($size>$field->filesize) {
-					$valid=false;
-					$field->errMessages[]=$this->prepareMessage(array($this->pi_getLL('wrong_filesize','',FALSE),$field->label,$field->filesize));
-				}
-				if (!isset($_FILES['tx_feusermanagement_pi1']['tmp_name'][$field->htmlID])) $valid=false;
-				if (strpos($filename,'|')!==false) $valid=false;
-			}
-			if ($field->unique) {
-				$id=$field->htmlID;
-				$value=mysql_real_escape_string($this->piVars[$id]);
-
-				$maparr=getTSValue('feuser_map',$this->conf);
-				$uniqueDBFields=array();
-				foreach($maparr as $fe_name=>$field_name) {
-					if ($field_name==$field->name) {
-						$uniqueDBFields[]=$fe_name;
-					}
-				}
-				$unique=true;
-				foreach ($uniqueDBFields as $db_name) {
-					$efFields=$this->cObj->enableFields('fe_users');
-					$sql='SELECT * FROM fe_users WHERE '.$db_name.'="'.$value.'" '.$efFields;
-					$res=$GLOBALS['TYPO3_DB']->sql_query($sql);
-
-					while ($row=$GLOBALS['TYPO3_DB']->sql_fetch_assoc($res)) {
-						$unique=false;
-					}
-				}
-				if (!$unique) {
-					$valid=false;
-					$field->errMessages[]=$this->prepareMessage(array($this->pi_getLL('unique_error','',FALSE),$field->label));
-				}
-			}
-
-			if ($field->equal) {
-				$ref=$field->equal;
-				$id=$field->htmlID;
-				$id2=$fields[$ref]->htmlID;
-				if ($this->piVars[$id]!=$this->piVars[$id2]) {
-					$valid=false;
-					$field->errMessages[]=$this->prepareMessage(array($this->pi_getLL('equal_error','',FALSE),$field->label,$fields[$ref]->label));
-				}
-			}
-			if ($field->validation) {
-				switch ($field->validation) {
-					case "email":
-						$pattern = '/'.$this->viewLib->emailReg.'/';
-						if (!preg_match($pattern,$this->piVars[$field->htmlID])) {
-
-							$valid=false;
-							$field->errMessages[]=$this->pi_getLL('email_error','',FALSE);
-						}
-						break;
-					case "password":
-						$pattern='/'.$this->viewLib->passwordReg.'/';
-
-						if (!preg_match($pattern,$this->piVars[$field->htmlID])) {
-							$valid=false;
-							$field->errMessages[]=$this->pi_getLL('password_error','',FALSE);
-						}
-						break;
-					case "regExp":
-
-						$pattern = '/'.$field->regExp.'/';
-						if (!preg_match($pattern,$this->piVars[$field->htmlID])) {
-							$valid=false;
-							$field->errMessages[]=$this->prepareMessage(array($this->pi_getLL('pattern_error','',FALSE),$field->label));
-						}
-						break;
-				}
-			}
+			$valid=$this->validateLib->validateField($field,$this)&&$valid;
 		}
 		### HOOK stepValidation ###
 		if (is_array($GLOBALS['TYPO3_CONF_VARS']['EXTCONF'][$this->extKey]['stepValidation'])) {
@@ -372,7 +272,7 @@ class tx_feusermanagement_pi1 extends tslib_pibase {
 		$fields=$this->modelLib->getCurrentFields($this->conf['steps.'][$step.'.'],$this);
 		foreach($fields as $field) {
 
-			$name=$field->dbName;
+			
 			$id=$field->htmlID;
 			if (isset($this->piVars[$id])) {
 				$value=$this->piVars[$id];
@@ -393,7 +293,7 @@ class tx_feusermanagement_pi1 extends tslib_pibase {
 				$tmpFile=$_FILES['tx_feusermanagement_pi1']['tmp_name'][$field->htmlID];
 				$origFile=$_FILES['tx_feusermanagement_pi1']['name'][$field->htmlID];
 				
-				$value=$tmpFile.'|'.$origFile;
+				$value=$tmpFile.chr(1).$origFile;
 				$this->modelLib->saveValueToSession($field->name,$value,$this);
 				
 			}
@@ -429,7 +329,7 @@ class tx_feusermanagement_pi1 extends tslib_pibase {
 			$field=$allFields[$field_name];
 			
 			if ($field->type=='upload') {
-				$files=explode('|',$this->getValueFromSession($allFields[$field_name]));
+				$files=explode(chr(1),$this->getValueFromSession($allFields[$field_name]));
 				$tempFilename=$files[0];
 				$origFilename=$files[1];
 				$path=t3lib_div::getIndpEnv('TYPO3_DOCUMENT_ROOT').'/'.$this->uploadDir;

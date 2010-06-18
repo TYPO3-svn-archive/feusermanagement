@@ -10,11 +10,22 @@
 		 * @param	[type]		$load_data: ...
 		 * @return	[type]		...
 		 */	
+		function getDataMap(&$obj) {
+			$maparr=getTSValue('feuser_map.',$obj->conf);
+			$map=array();
+			foreach($maparr as $key=>$value) {
+				$map[(string)$value]=$key;
+			}
+			return $map;
+		}
 		function getCurrentFields($TSstep,$obj,$load_data=0) {
+			t3lib_div::debug('Call Function');
+			#t3lib_div::debug($obj);
 			$i=0;
 			$TSfields=$TSstep["fields."];
 			$fields=array();
 			if (!is_array($TSfields)) return $fields;
+			$dataMap=$this->getDataMap($obj);
 			
 			foreach($TSfields as $key=>$TSAttributes) {
 				
@@ -22,7 +33,7 @@
 				$name=$obj->removeDot($key);
 				if (array_key_exists($name,$this->fields)) {
 				
-					$fields[]=&$this->fields[$name];
+					$fields[$name]=&$this->fields[$name];
 					continue;
 				}
 				
@@ -30,7 +41,7 @@
 				$field=new Field();
 				$field->name=$name;
 				$field->label=$name;
-				
+				$field->dbName=$dataMap[$name];
 				$field->markerName=strtoupper($name);
 				$field->tooltip=$name;
 				$field->list=array();
@@ -118,11 +129,13 @@
 				$field->TS=$TSAttributes;
 				$field->tempID=$i;
 				$this->fields[$name]=$field;
+				
 				$fields[$name]=&$this->fields[$name];
-
+				
 
 			}
-
+			
+			
 			return $fields;
 		}
 
@@ -137,6 +150,7 @@
 			$allFields=array();
 			$count=$obj->getLastStepNr();
 			for ($i=0;$i<=$count;$i++) {
+				#t3lib_div::debug($this->getCurrentFields($obj->conf["steps."][$i."."],$obj,$load_data));
 				$allFields=array_merge($allFields,$this->getCurrentFields($obj->conf["steps."][$i."."],$obj,$load_data));
 			}
 			return $allFields;
