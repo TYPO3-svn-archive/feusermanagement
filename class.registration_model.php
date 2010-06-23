@@ -184,8 +184,8 @@
 		}
 		function secureDataBeforeInsertUpdate($value,$obj=null) {
 			if (is_object($obj)) {
-				if ($obj->conf['config.']['utf8_encodeBeforeInsert']) $value=utf8_encode($obj);
-				if ($obj->conf['config.']['utf8_decodeBeforeInsert']) $value=utf8_decode($obj);
+				if ($obj->conf['config.']['utf8_encodeBeforeInsert']) $value=utf8_encode($value);
+				if ($obj->conf['config.']['utf8_decodeBeforeInsert']) $value=utf8_decode($value);
 			}
 			$retValue=mysql_real_escape_string(htmlentities($value));
 			if (is_array($GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['feusermanagement']['secure_data'])) {
