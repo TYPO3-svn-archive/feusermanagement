@@ -1,0 +1,264 @@
+<T3DataStructure>
+	<meta>
+	<langDisable>1</langDisable>
+	</meta>
+	<sheets>
+		<general>
+			<ROOT>
+				<TCEforms>
+					<sheetTitle>General Configuration</sheetTitle>
+				</TCEforms>
+				<type>array</type>
+				<el>
+					<adminConfirmation>
+						<TCEforms>
+							<label>Require Admin Confirmation</label>
+							<config>
+								<type>check</type>
+							</config>
+						</TCEforms>
+					</adminConfirmation>
+					<userConfirmation>
+						<TCEforms>
+							<label>Require User to confirm his E-Mail</label>
+							<config>
+								<type>check</type>
+							</config>
+						</TCEforms>
+					</userConfirmation>
+					<autologin>
+						<TCEforms>
+							<label>If no Confirmation is required. Should the user be logged in automatically</label>
+							<config>
+								<type>check</type>
+							</config>
+						</TCEforms>
+					</autologin>
+					<autologinRedirPid>
+						<TCEforms>
+							<exclude>1</exclude>
+							<label>Page the User should be redirected after registration</label>
+							<config>
+								<type>group</type>
+								<internal_type>db</internal_type>
+								<allowed>pages</allowed>
+								<size>1</size>
+								<maxitems>1</maxitems>
+								<minitems>0</minitems>
+								<show_thumbs>1</show_thumbs>
+							</config>
+						</TCEforms>
+					</autologinRedirPid>
+					       
+				</el>
+			</ROOT>
+		</general>
+		<mail>
+			<ROOT>
+				<TCEforms>
+					<sheetTitle>Mail Configuration</sheetTitle>
+				</TCEforms>
+				<type>array</type>
+				<el>
+					<adminMail>
+						<TCEforms>
+							<label>Admin Mail</label>
+							<config>
+								<type>input</type>
+								<size>30</size>
+							</config>
+						</TCEforms>
+					</adminMail>
+					<adminMailSubject>
+						<TCEforms>
+							<label>Admin Mail Subject</label>
+							<config>
+								<type>input</type>
+								<size>30</size>
+							</config>
+						</TCEforms>
+					</adminMailSubject>
+					<userMailSubject>
+						<TCEforms>
+							<label>User Mail Subject</label>
+							<config>
+								<type>input</type>
+								<size>30</size>
+							</config>
+						</TCEforms>
+					</userMailSubject>
+					<mailFromEMail>
+						<TCEforms>
+							<label>E-Mail address, mails are send from</label>
+							<config>
+								<type>input</type>
+								<size>30</size>
+							</config>
+						</TCEforms>
+					</mailFromEMail>
+					<mailFromName>
+						<TCEforms>
+							<label>Label for the sender Address</label>
+							<config>
+								<type>input</type>
+								<size>30</size>
+							</config>
+						</TCEforms>
+					</mailFromName>
+					<userNotify>
+						<TCEforms>
+							<label>Send a notification mail, after registration</label>
+							<config>
+								<type>check</type>
+							</config>
+						</TCEforms>
+					</userNotify>
+				</el>
+			</ROOT>
+		</mail>
+		<template>
+			<ROOT>
+				<TCEforms>
+					<sheetTitle>Template</sheetTitle>
+				</TCEforms>
+				<type>array</type>
+				<el>
+					<template>
+						<TCEforms>
+							<label>Template-File</label>
+							<config>
+								<type>input</type>
+								<size>50</size>
+							</config>
+						</TCEforms>
+					</template>
+					<html_prefix>
+						<TCEforms>
+							<label>HTML-prefix-id for Fields (optional)</label>
+							<config>
+								<type>input</type>
+								<size>50</size>
+							</config>
+						</TCEforms>
+					</html_prefix>
+					<errMsgCount>
+						<TCEforms>
+							<label>Number of Error-Messages for one field to be displayed instantly</label>
+							<config>
+								<type>input</type>
+								<size>50</size>
+							</config>
+						</TCEforms>
+					</errMsgCount>
+					<globalErrMsgCount>
+						<TCEforms>
+							<label>Number of Error-Messages to be displayed instantly globally</label>
+							<config>
+								<type>input</type>
+								<size>50</size>
+							</config>
+						</TCEforms>
+					</globalErrMsgCount>
+				</el>
+			</ROOT>
+		</template>
+		<database>
+			<ROOT>
+				<TCEforms>
+					<sheetTitle>Database Options</sheetTitle>
+				</TCEforms>
+				<type>array</type>
+				<el>
+					    
+					<removeXSS>
+						<TCEforms>
+							<label>Calls removeXSS when writing to DB</label>
+							<config>
+								<type>check</type>
+							</config>
+						</TCEforms>
+					</removeXSS>
+					<utf8_encodeBeforeInsert>
+						<TCEforms>
+							<label>Encodes the values to utf8 before inserting to DB - on a clean installation this should never be necessary</label>
+							<config>
+								<type>check</type>
+							</config>
+						</TCEforms>
+					</utf8_encodeBeforeInsert>
+					<utf8_decodeBeforeInsert>
+						<TCEforms>
+							<label>Does Utf8-Decode before inserting to DB - on a clean installation this should never be necessary</label>
+							<config>
+								<type>check</type>
+							</config>
+						</TCEforms>
+					</utf8_decodeBeforeInsert>
+				</el>
+			</ROOT>
+		</database>
+		<feuser>
+			<ROOT>
+				<TCEforms>
+					<sheetTitle>FE-User</sheetTitle>
+				</TCEforms>
+				<type>array</type>
+				<el>
+					<useMD5>
+						<TCEforms>
+							<label>Use MD5 hashed passwords</label>
+							<config>
+								<type>check</type>
+							</config>
+						</TCEforms>
+					</useMD5>
+					<autogenPwd>
+						<TCEforms>
+							<label>Automatically generate a password</label>
+							<config>
+								<type>check</type>
+							</config>
+						</TCEforms>
+					</autogenPwd>
+					<usersConfirmedPid>
+						<TCEforms>
+							<label>Number of Error-Messages for one field to be displayed instantly</label>
+							<config>
+								<type>input</type>
+								<size>50</size>
+							</config>
+						</TCEforms>
+					</usersConfirmedPid>
+					<usersConfirmedGroup>
+						<TCEforms>
+							<label>Number of Error-Messages to be displayed instantly globally</label>
+							<config>
+								<type>input</type>
+								<size>50</size>
+							</config>
+						</TCEforms>
+					</usersConfirmedGroup>
+					<usersAdminConfirmedPid>
+						<TCEforms>
+							<label>Number of Error-Messages to be displayed instantly globally</label>
+							<config>
+								<type>input</type>
+								<size>50</size>
+							</config>
+						</TCEforms>
+					</usersAdminConfirmedPid>
+					<usersAdminConfirmedGroup>
+						<TCEforms>
+							<label>Number of Error-Messages to be displayed instantly globally</label>
+							<config>
+								<type>input</type>
+								<size>50</size>
+							</config>
+						</TCEforms>
+					</usersAdminConfirmedGroup>
+					
+				</el>
+			</ROOT>
+		</feuser>
+	</sheets>
+</T3DataStructure>
