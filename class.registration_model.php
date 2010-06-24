@@ -186,8 +186,9 @@
 			if (is_object($obj)) {
 				if ($obj->conf['config.']['utf8_encodeBeforeInsert']) $value=utf8_encode($value);
 				if ($obj->conf['config.']['utf8_decodeBeforeInsert']) $value=utf8_decode($value);
+				if ($obj->conf['config.']['removeXSS']) $value=t3lib_div::removeXSS($value);
 			}
-			$retValue=mysql_real_escape_string(htmlentities($value));
+			$retValue=mysql_real_escape_string($value);
 			if (is_array($GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['feusermanagement']['secure_data'])) {
 				foreach($GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['feusermanagement']['secure_data'] as $userFunc) {
 					$params = array(

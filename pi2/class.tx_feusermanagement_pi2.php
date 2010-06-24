@@ -84,7 +84,7 @@ class tx_feusermanagement_pi2 extends tslib_pibase {
 		$this->pi_USER_INT_obj=1;
 
 		$this->init();
-
+		
 		if (!$this->baseURL) return 'config.baseURL not set';
 		$checkInput=true;
 
@@ -92,7 +92,7 @@ class tx_feusermanagement_pi2 extends tslib_pibase {
 			return 'No user is logged in';
 		}
 		$step=$GLOBALS["TSFE"]->fe_user->getKey("ses","ccm_prof_step");
-
+		if (!count($this->piVars)) $step=0;
 		### SPRUNG AUF VORGÄNGERSEITE? ###
 		if ($this->piVars['backlinkToStep']&&$GLOBALS["TSFE"]->fe_user->getKey("ses","ccm_reg_step")) { ###SESSION EXISTIERT, UND ER WILL ZURÜCK ###
 			$back=$this->piVars["backlinkToStep"];
@@ -250,10 +250,11 @@ class tx_feusermanagement_pi2 extends tslib_pibase {
 		foreach($fields as $field) {
 
 			$id=$field->htmlID;
-			if (isset($this->piVars[$id])) {
-				$value=$this->piVars[$id];
-				
+			
+			if (isset($this->piVars[$id]) || $field->type=="checkbox") { 
+				$value=$this->piVars[$id];	
 				$this->modelLib->saveValueToSession($field->name,$value,$this);
+				
 				### HOOK afterValueInsert ###
 				if (is_array($GLOBALS['TYPO3_CONF_VARS']['EXTCONF'][$this->extKey]['afterValueInsert_pi2'])) {
 					foreach($GLOBALS['TYPO3_CONF_VARS']['EXTCONF'][$this->extKey]['afterValueInsert_pi2'] as $userFunc) {
@@ -310,20 +311,20 @@ class tx_feusermanagement_pi2 extends tslib_pibase {
 		foreach($maparr as $fe_name=>$field_name) {
 			$currField=$allFields[$field_name];
 			if ($fe_name=='password' && !($currField->required) && !$this->getValueFromSession($allFields[$field_name])) continue;
-			$map[$fe_name]=$this->modelLib->secureDataBeforeInsertUpdate($this->getValuesFromUserMapString($field_name),$this);
+			$map[$fe_name]=$this->modelLib->secureDataBeforeInsertUpdate($this->getValuesFromUserMapString($field_name),$this); 
 			if ($fe_name=='password') {
 				if (getTSValue('config.useMD5',$this->conf)) {
 					$map['password']=md5($map['password']);
 				}
 			}
-		}
-
+		} 
+		
 		foreach ($map as $key=>$value) {
 			$updateStr.=(strlen($updateStr))?',':'';
-			$updateStr.=$key.'="'.$value.'"';
+			$updateStr.=$key.'="'.$value.'"'; 
 		}
 		
-		$sql="UPDATE fe_users SET ".$updateStr." WHERE uid='".$this->feuser_uid."'";
+		$sql="UPDATE fe_users SET ".$updateStr." WHERE uid='".$this->feuser_uid."'"; 
 		
 		$GLOBALS['TYPO3_DB']->sql_query($sql);
 

@@ -110,7 +110,7 @@
 		}
 		private function validateRequire(&$field,&$obj) {
 			$valid=true;
-			if (!(isset($obj->piVars[$field->htmlID]) && ($obj->piVars[$field->htmlID]))) {
+			if (!(isset($obj->piVars[$field->htmlID]) && ($obj->piVars[$field->htmlID]) )&& !($obj->getValueFromSession($field))) {
 				if ($field->type=='upload') {
 					if (isset($_FILES[$obj->prefixId][$field->name][$field->htmlID])) {
 						
