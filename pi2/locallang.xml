@@ -33,5 +33,40 @@
 			<label index="field_email_tooltip">Please enter your E-Mail address</label>
 			<label index="submit_label">Submit</label>
 		</languageKey>
+		<languageKey index="de" type="array">
+			<label index="list_mode_1">Mode 1</label>
+			<label index="list_mode_2">Mode 2</label>
+			<label index="list_mode_3">Mode 3</label>
+			<label index="back">Zurück</label>
+			<label index="submit_button_label">Absenden</label>
+			<label index="required_error">Das Feld '###1###' benötigt auch das Feld '###2###'</label>
+			<label index="not_enter">Das Feld '###1###' wurde nicht gesetzt.</label>
+			<label index="unique_error">Der Wert in Feld ###1### ist schon vergeben, bitte setzen Sie einen anderen.</label>
+			<label index="equal_error">Die beiden Felder ###1### und ###2### sind nicht identisch.</label>
+			<label index="email_error">Die Email Adresse ist nicht gültig.</label>
+			<label index="username_error">Der Benutzername ist ungültig. Er muss mindestens 6 Zeichen (davon mind. einen Buchstaben und eine Ziffer) enthalten. Großbuchstaben und Leerzeichen sind nicht erlaubt.</label>
+			<label index="password_error">Das eingegebene Passwort ist ungültig. Es muss mindestens 6 Zeichen (davon mind. einen Groß- und einen Kleinbuchstaben und eine Ziffer) enthalten. Leerzeichen sind nicht erlaubt.</label>
+			<label index="pattern_error">Das folgende Pflichtfeld ist nicht gefüllt:</label>
+			<label index="admin_error">Internal Error, Please define pi.config.username, pi.config.password, pi.config.pid</label>
+			<label index="banned">Deine Registrierung wurde nicht akzeptiert.</label>
+			<label index="checkbox_error">Bitte markiere die folgende Checkbox: ###1###</label>
+			<label index="username_error_value_js">value + " ist kein gueltiger Benutzername"</label>
+			<label index="email_error_value_js">value + " ist keine gueltige Email Adresse"</label>
+			<label index="back">Zurück</label>
+			<label index="field_nickname">Nickname</label>
+			<label index="field_nickname_tooltip">Bitte geben Sie Ihren Nicknamen an.</label>
+			<label index="field_password">Passwort</label>
+			<label index="field_password_tooltip">Bitte geben Sie Ihr Passwort an.</label>
+			<label index="field_password2">Password Wiederholung</label>
+			<label index="field_password2_tooltip">Bitte wiederholen Sie Ihr Passwort an.</label>
+			<label index="field_email">Email Adresse</label>
+			<label index="field_email_tooltip">Bitte geben Sie eine gültige Email Adresse an.</label>
+			<label index="submit_label">Speichern</label>
+	
+			<label index="emptyOptionLabel">-</label>
+			<label index="not_enter_file">Bitte wählen Sie eine Datei für ###1###</label>
+			<label index="wrong_filetype">Die Datei in ###1### entspricht nicht den erlaubten Dateitypen (###2###)</label>
+			<label index="wrong_filesize">Die Datei in ###1### ist zu groß: die maximal erlaubte Dateigröße beträgt (###2###) Bytes</label>
+		</languageKey>
 	</data>
 </T3locallang>
