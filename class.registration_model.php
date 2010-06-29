@@ -81,7 +81,7 @@
 				
 				if (array_key_exists('emptyLabel',$TSAttributes)) $field->emptyLabel=$TSAttributes['emptyLabel'];
 				if (array_key_exists('fileSize',$TSAttributes)) $field->filesize=$TSAttributes['fileSize'];
-				if (array_key_exists('fileTypes',$TSAttributes)) $field->filesize=$TSAttributes['fileTypes'];
+				if (array_key_exists('fileTypes',$TSAttributes)) $field->filetypes=$TSAttributes['fileTypes'];
 				if (array_key_exists("required",$TSAttributes)) $field->required=$TSAttributes["required"];
 				if (array_key_exists("requires",$TSAttributes)) $field->requires=$TSAttributes["requires"];
 				if (array_key_exists("includeEmptyOption",$TSAttributes)) $field->includeEmptyOption=$TSAttributes["includeEmptyOption"];
