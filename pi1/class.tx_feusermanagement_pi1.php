@@ -490,7 +490,8 @@ class tx_feusermanagement_pi1 extends tslib_pibase {
 		$user = $GLOBALS['TYPO3_DB']->sql_fetch_assoc($res);
 		$confirmLink=$this->baseURL.$this->cObj->getTypoLink_URL($GLOBALS['TSFE']->id,array($this->prefixId.'[userConfirmationToken]'=>$user['registration_token'],$this->prefixId.'[fe_user]'=>$id));
 		$markerArr=array();
-		$markerArr['###CONFIRMATION_LINK###']=$confirmLink;
+		#$markerArr['###CONFIRMATION_LINK###']=$confirmLink;
+		$markerArr['###CONFIRMATION_LINK###']="<a href=".$confirmLink.">".$confirmLink."</a>";
 		foreach($user as $key=>$value) {
 			$markerArr['###FE_'.strtoupper($key).'###']=$value;
 		}
@@ -551,8 +552,10 @@ class tx_feusermanagement_pi1 extends tslib_pibase {
 		$adminToken=$row_feuser['registration_token'];#md5($TYPO3_CONF_VARS['SYS']['encryptionKey'].$row['registration_token']);
 		$confirmLink=$this->baseURL.$this->pi_getPageLink($GLOBALS['TSFE']->id,$target='',$urlParameters=array($this->prefixId.'[adminAction]'=>'confirm',$this->prefixId.'[token]'=>md5($adminToken),$this->prefixId.'[fe_user]'=>$row_feuser['uid']));
 		$declineLink=$this->baseURL.$this->pi_getPageLink($GLOBALS['TSFE']->id,$target='',$urlParameters=array($this->prefixId.'[adminAction]'=>'decline',$this->prefixId.'[token]'=>md5($adminToken),$this->prefixId.'[fe_user]'=>$row_feuser['uid']));
-		$markerArr["###ADMIN_ACCEPT###"]=$confirmLink;
-		$markerArr["###ADMIN_DECLINE###"]=$declineLink;
+		#$markerArr["###ADMIN_ACCEPT###"]=$confirmLink;
+		#$markerArr["###ADMIN_DECLINE###"]=$declineLink;
+		$markerArr["###ADMIN_ACCEPT###"]="<a href=".$confirmLink.">".$confirmLink."</a>";
+		$markerArr["###ADMIN_DECLINE###"]="<a href=".$declineLink.">".$declineLink."</a>";
 		$disabled=0;
 		if ($this->requireAdminConfirm) $disabled=1;
 
