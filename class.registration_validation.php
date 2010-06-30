@@ -82,7 +82,7 @@
 			$filename=$_FILES[$obj->prefixId]['name'][$field->htmlID];
 			$allowedExt=t3lib_div::trimExplode(',',$field->filetypes);
 			if (!in_array('*',$allowedExt)) {
-				$fileext=substr($filename,strrpos($filename,'.'));
+				$fileext=substr($filename,min(strrpos($filename,'.')+1,strlen($filename)));
 				if (!in_array($fileext,$allowedExt)) {
 					$valid=false;
 					$field->errMessages[]=$obj->prepareMessage(array($obj->pi_getLL('wrong_filetype','',FALSE),$field->label,implode(',',$allowedExt)));
