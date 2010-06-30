@@ -33,6 +33,8 @@
 			<label index="not_enter_file">You did not select a file for ###1###</label>
 			<label index="wrong_filetype">Your file in ###1### does not match the allowed filetypes (###2###)</label>
 			<label index="wrong_filesize">Your file in ###1### is too large: max allowed size is (###2###) Bytes</label>
+			<label index="username_error">Field '###1###' may not contain uppercase letters</label>
+			
 		</languageKey>
 		<languageKey index="de" type="array">
 			<label index="required_error">Das Feld '###1###' benötigt auch das Feld '###2###'</label>
@@ -62,6 +64,7 @@
 			<label index="not_enter_file">Bitte wählen Sie eine Datei für ###1###</label>
 			<label index="wrong_filetype">Die Datei in ###1### entspricht nicht den erlaubten Dateitypen (###2###)</label>
 			<label index="wrong_filesize">Die Datei in ###1### ist zu groß: die maximal erlaubte Dateigröße beträgt (###2###) Bytes</label>
+			<label index="username_error">Das Feld '###1###' darf keine Grossbuchstaben enthalten</label>
 		</languageKey>
 	</data>
 </T3locallang>
