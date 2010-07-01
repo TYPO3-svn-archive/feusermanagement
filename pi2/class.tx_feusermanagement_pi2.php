@@ -51,6 +51,7 @@ class tx_feusermanagement_pi2 extends tslib_pibase {
 	var $templatefile='';
 	var $step=0;
 	var $errCount=0;
+	var $uploadDir='uploads/';
 	/**
 	 * The main method of the PlugIn
 	 *
@@ -67,6 +68,7 @@ class tx_feusermanagement_pi2 extends tslib_pibase {
 		$this->validateLib=t3lib_div::makeInstance('registration_validation');
 		$this->templateFileName=getTSValue('config.template',$this->conf);
 		$this->templatefile = $this->cObj->fileResource($this->templateFileName);
+		if ($uploadDir=getTSValue('config.upload_dir',$this->conf)) $this->uploadDir=$uploadDir;
 	}
 
 	/**
@@ -85,7 +87,7 @@ class tx_feusermanagement_pi2 extends tslib_pibase {
 
 		$this->init();
 		
-		if (!$this->baseURL) return 'config.baseURL not set';
+		#if (!$this->baseURL) return 'config.baseURL not set';
 		$checkInput=true;
 
 		if (!$this->feuser_uid) {
@@ -267,9 +269,14 @@ class tx_feusermanagement_pi2 extends tslib_pibase {
 				}
 			}
 			if ($field->type=='upload') {
-				$tmpFile=$_FILES['tx_feusermanagement_pi1']['tmp_name'][$field->htmlID];
-				$origFile=$_FILES['tx_feusermanagement_pi1']['name'][$field->htmlID];
 				
+				$tmpFile=$_FILES['tx_feusermanagement_pi2']['tmp_name'][$field->htmlID];
+				$origFile=$_FILES['tx_feusermanagement_pi2']['name'][$field->htmlID];
+				if (!$tmpFile||!$origFile) {
+					
+					$this->modelLib->saveValueToSession($field->name,'',$this);
+					continue;
+				}
 				$value=$tmpFile.chr(1).$origFile;
 				$this->modelLib->saveValueToSession($field->name,$value,$this);
 				
@@ -287,7 +294,9 @@ class tx_feusermanagement_pi2 extends tslib_pibase {
 				$content.=mysql_real_escape_string(substr($key,1,strlen($key)-2));
 			} else {
 				if (array_key_exists($key,$allFields)) {
-					$content.=$this->getValueFromSession($allFields[$key]);
+					$val=$this->getValueFromSession($allFields[$key]);
+					if (is_array($val)) $val=implode(',',$val);
+					$content.=$val;
 				}
 				else {
 					return 'invalid configuration';
@@ -304,15 +313,36 @@ class tx_feusermanagement_pi2 extends tslib_pibase {
 	 */
 	function updateFEUser() {
 		$allFields=$this->modelLib->getAllFields($this);
-		
 		$map=array();
-
 		$maparr=getTSValue('feuser_map',$this->conf);
+		
 		foreach($maparr as $fe_name=>$field_name) {
 			$currField=$allFields[$field_name];
-			if ($fe_name=='password' && !($currField->required) && !$this->getValueFromSession($allFields[$field_name])) continue;
+			// If Upload-File Special handling is needed
+			if (is_object($currField)&&$currField->type=='upload') {
+				
+				$files=explode(chr(1),$this->getValueFromSession($allFields[$field_name],0));
+				
+				if (count($files)==2) {
+					$tempFilename=$files[0];
+					$origFilename=$files[1];
+					$path=t3lib_div::getIndpEnv('TYPO3_DOCUMENT_ROOT').'/'.$this->uploadDir;
+					$newName=$this->modelLib->getFreeFilename($path,$origFilename,$this->conf['config.']['upload_file_prefix']);
+					move_uploaded_file($tempFilename,$path.$newName);
+					$map[$fe_name]=$this->modelLib->secureDataBeforeInsertUpdate($this->uploadDir.$newName);
+				} 
+				
+				continue;
+			}
+			
+			// Skip update password if not set and not required
+			if ($fe_name=='password' && !($currField->required) && !$this->getValueFromSession($allFields[$field_name],false)) continue;
+			// get the Value - already formated correctly for the DB
 			$map[$fe_name]=$this->modelLib->secureDataBeforeInsertUpdate($this->getValuesFromUserMapString($field_name),$this); 
 			if ($fe_name=='password') {
+				// save cleartextpassword to Session
+				$this->modelLib->saveValueToSession('password',$map['password'],$this);
+				// If wanted - do md5-hashing
 				if (getTSValue('config.useMD5',$this->conf)) {
 					$map['password']=md5($map['password']);
 				}
@@ -325,8 +355,8 @@ class tx_feusermanagement_pi2 extends tslib_pibase {
 		}
 		
 		$sql="UPDATE fe_users SET ".$updateStr." WHERE uid='".$this->feuser_uid."'"; 
-		
-		$GLOBALS['TYPO3_DB']->sql_query($sql);
+		#t3lib_div::debug($sql,'update');
+		#$GLOBALS['TYPO3_DB']->sql_query($sql);
 
 		if (is_array($GLOBALS['TYPO3_CONF_VARS']['EXTCONF'][$this->extKey]['feuser_write'])) {
 			foreach($GLOBALS['TYPO3_CONF_VARS']['EXTCONF'][$this->extKey]['feuser_write'] as $userFunc) {
@@ -407,16 +437,19 @@ class tx_feusermanagement_pi2 extends tslib_pibase {
 	 * @param	[type]		$field: ...
 	 * @return	[type]		...
 	 */
-	function getValueFromSession($field) {
+	function getValueFromSession($field,$loadData=1) {
 		$sesVal=$this->modelLib->getValueFromSession($field->name,$this);
+		
 		if ($sesVal) return $sesVal;
 		if ($field->value) return $field->value; //Wert der übers Typoscript übergeben wurde, für z.B. Hidden-Fields
-
+		
+		if (!$loadData) return false;
 		$map=$this->modelLib->getDataMap($this);
 		if ($fe_field=$map[$field->name]) {
 			$sql='SELECT '.$fe_field.' FROM fe_users WHERE uid='.$GLOBALS['TSFE']->fe_user->user['uid'];
 			$res=$GLOBALS['TYPO3_DB']->sql_query($sql);
 			if ($row = $GLOBALS['TYPO3_DB']->sql_fetch_assoc($res)) {
+		
 				return $row[$fe_field];
 			}
 		}
@@ -497,6 +530,8 @@ class tx_feusermanagement_pi2 extends tslib_pibase {
 		$valid=true;
 		foreach($fields as $field) {
 			$valid=$this->validateLib->validateField($field,$this)&&$valid;
+			#t3lib_div::debug($valid,$field->name.'-valid');
+			
 		}
 		### HOOK stepValidation ###
 		if (is_array($GLOBALS['TYPO3_CONF_VARS']['EXTCONF'][$this->extKey]['stepValidation'])) {

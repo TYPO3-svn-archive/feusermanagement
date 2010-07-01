@@ -81,6 +81,7 @@
 			$size=$_FILES[$obj->prefixId]['size'][$field->htmlID];
 			$filename=$_FILES[$obj->prefixId]['name'][$field->htmlID];
 			$allowedExt=t3lib_div::trimExplode(',',$field->filetypes);
+			if (!$filename) return true;
 			if (!in_array('*',$allowedExt)) {
 				$fileext=substr($filename,min(strrpos($filename,'.')+1,strlen($filename)));
 				if (!in_array($fileext,$allowedExt)) {
@@ -110,7 +111,8 @@
 		}
 		private function validateRequire(&$field,&$obj) {
 			$valid=true;
-			if (!(isset($obj->piVars[$field->htmlID]) && ($obj->piVars[$field->htmlID]) )&& !($obj->getValueFromSession($field))) {
+
+			if (!(isset($obj->piVars[$field->htmlID]) && ($obj->piVars[$field->htmlID]) )&& !($obj->getValueFromSession($field,0))) {
 				if ($field->type=='upload') {
 					if (isset($_FILES[$obj->prefixId][$field->name][$field->htmlID])) {
 						

@@ -20,7 +20,6 @@
 		}
 		function getCurrentFields($TSstep,$obj,$load_data=0) {
 			
-			#t3lib_div::debug($obj);
 			$i=0;
 			$TSfields=$TSstep["fields."];
 			$fields=array();
@@ -48,7 +47,7 @@
 				$field->errField=$htmlPrefix.'err_'.$name;
 				$field->htmlID=$htmlPrefix.'field_'.$name;
 				if (array_key_exists('type',$TSAttributes)) $field->type=$TSAttributes['type'];
-				if ($field->type=='dropdown'||$field->type=='radio') {
+				if ($field->type=='dropdown'||$field->type=='radio'||$field->type=='multiple') {
 					if (array_key_exists('options.',$TSAttributes)&&is_array($TSAttributes['options.'])) {
 						$TSOptions=$TSAttributes['options.'];
 						foreach($TSOptions as $key=>$TSoption) {
@@ -97,18 +96,23 @@
 				if (array_key_exists("unique",$TSAttributes)) $field->unique=$TSAttributes["unique"];
 				if (array_key_exists("equal",$TSAttributes)) $field->equal=$TSAttributes["equal"];
 				if (array_key_exists("regExp",$TSAttributes)) $field->regExp=$TSAttributes["regExp"];
+				
 				if ($load_data) {
+					
 					if (!$field->value) $field->value=$obj->getValueFromSession($field);
+					
 					if (!$field->value && $obj->prefixId=='tx_feusermanagement_pi2') {
 						//load Data From fe_user
 
 						$maparr=getTSValue('feuser_map',$obj->conf);
+						
 						foreach($maparr as $fe_name=>$field_name) {
 							if ($field_name==$field->name) {
 								$sql='SELECT '.$fe_name.' FROM fe_users WHERE uid="'.$obj->feuser_uid.'"';
 								$res=$GLOBALS['TYPO3_DB']->sql_query($sql);
 								if ($row = $GLOBALS['TYPO3_DB']->sql_fetch_assoc($res)) {
 									$field->value=$row[$fe_name];
+									
 								}
 							}
 						}
@@ -124,6 +128,7 @@
 							}
 						}
 					}
+					if ($field->type=='multiple') $field->value=explode(',',$field->value);
 				}
 				$field->notCheckedMessage=($field->type=="checkbox")?("'".$obj->prepareMessage(array($obj->pi_getLL('email_error','',FALSE),$field->label))):$obj->prepareMessage(array($obj->pi_getLL('not_enter','',FALSE),$field->label));
 				$field->TS=$TSAttributes;
@@ -150,7 +155,7 @@
 			$allFields=array();
 			$count=$obj->getLastStepNr();
 			for ($i=0;$i<=$count;$i++) {
-				#t3lib_div::debug($this->getCurrentFields($obj->conf["steps."][$i."."],$obj,$load_data));
+				
 				$allFields=array_merge($allFields,$this->getCurrentFields($obj->conf["steps."][$i."."],$obj,$load_data));
 			}
 			return $allFields;
@@ -170,6 +175,7 @@
 		}
 		function getValueFromSession($key,$obj) {
 			$sesArr=$GLOBALS["TSFE"]->fe_user->getKey('ses',$obj->prefixId);
+			
 			if (is_array($sesArr)) return $sesArr[$key];
 			return false;
 		}
@@ -183,6 +189,9 @@
 			$GLOBALS['TSFE']->fe_user->setKey('ses',$obj->prefixId,false);
 		}
 		function secureDataBeforeInsertUpdate($value,$obj=null) {
+			if (is_array($value)) {
+				$value=implode(',',$value);
+			}
 			if (is_object($obj)) {
 				if ($obj->conf['config.']['utf8_encodeBeforeInsert']) $value=utf8_encode($value);
 				if ($obj->conf['config.']['utf8_decodeBeforeInsert']) $value=utf8_decode($value);

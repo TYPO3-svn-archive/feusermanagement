@@ -144,11 +144,8 @@ class tx_feusermanagement_pi1 extends tslib_pibase {
 		}
 
 		### GET TEMPLATES ###
-
 		$template=$this->cObj->getSubpart($this->templatefile,'###STEP_'.$step.'###');
-		#$errorTempl=$this->cObj->getSubpart($this->templatefile,'###ERROR_PART###');
 		$finalTempl=$this->cObj->getSubpart($this->templatefile,'###FINAL_SCREEN###');
-		#$errorHTML=str_replace('###ERROR_MSG###',$this->errMsg,$errorTempl);
 		$fields=$this->modelLib->getCurrentFields($this->conf['steps.'][$step.'.'],$this);
 
 		### HOOK processFields ###
@@ -171,8 +168,6 @@ class tx_feusermanagement_pi1 extends tslib_pibase {
 				$jsCodeOnBlur[]=$js;
 			}
 		}
-
-		
 		$formJS=$this->viewLib->wrapFormJS($fields,$step,$this);
 		### GET HTML ###
 		$markerArr=array();
@@ -182,13 +177,10 @@ class tx_feusermanagement_pi1 extends tslib_pibase {
 		$markerArr["###SUBMIT###"]='<input type="submit" value="'.$this->pi_getLL('submit_label','',FALSE).'" />';
 		$markerArr["###STEP###"]=$step." / ".$lastStep;
 
-			###OLD VALUES###
+		###OLD VALUES###
 		$markerArr=$this->viewLib->fillMarkers($allFields,$markerArr,$this);
 		
-			###ERROR_HTML###
-		#$errorHTML=str_replace("###ERROR_MSG###",$this->errMsg,$errorTempl);
-		#$markerArr["###ERROR###"]=($this->errMsg)?$errorHTML:"";
-			### NAVIGATION BAR ###
+		### NAVIGATION BAR ###
 		$navigation="";
 		$backLinks=$this->getBacklinks($step);
 		foreach($backLinks as $backlink) {
@@ -209,13 +201,15 @@ class tx_feusermanagement_pi1 extends tslib_pibase {
 				}
 			}
 		}
-		if (!$final) {
-			$template=str_replace(array_keys($markerArr),$markerArr,$template);
-		} else {
-			$template=str_replace(array_keys($markerArr),$markerArr,$finalTempl);
+		if ($final) {
+			$content=str_replace(array_keys($markerArr),$markerArr,$finalTempl);
 			$this->userMailTemplate=str_replace(array_keys($markerArr),$markerArr,$this->userMailTemplate);
 			$this->adminMailTemplate=str_replace(array_keys($markerArr),$markerArr,$this->adminMailTemplate);
 			$this->createNewFEUser();
+			$GLOBALS["TSFE"]->fe_user->setKey('ses','ccm_reg_step',"0");
+			$this->modelLib->clearValuesInSession($this);
+		} else {
+			$content=str_replace(array_keys($markerArr),$markerArr,$template);
 		}
 
 		$js='
@@ -225,13 +219,7 @@ class tx_feusermanagement_pi1 extends tslib_pibase {
 			</script>
 		';
 		$GLOBALS['TSFE']->additionalHeaderData['feusermanagementjs']=$js;
-		$content.=$template;
-		if ($final) {
-		### SESSION LÖSCHEN ###
-			$GLOBALS["TSFE"]->fe_user->setKey('ses','ccm_reg_step',"0");
-			#$this->clearSessionData();
-			$this->modelLib->clearValuesInSession($this);
-		}
+		
 		return $this->pi_wrapInBaseClass($content);
 	}
 
@@ -292,7 +280,10 @@ class tx_feusermanagement_pi1 extends tslib_pibase {
 			if ($field->type=='upload') {
 				$tmpFile=$_FILES['tx_feusermanagement_pi1']['tmp_name'][$field->htmlID];
 				$origFile=$_FILES['tx_feusermanagement_pi1']['name'][$field->htmlID];
-				
+				if (!$tmpFile||!$origFile) {
+					$this->modelLib->saveValueToSession($field->name,'',$this);
+					continue;
+				}
 				$value=$tmpFile.chr(1).$origFile;
 				$this->modelLib->saveValueToSession($field->name,$value,$this);
 				
@@ -316,7 +307,9 @@ class tx_feusermanagement_pi1 extends tslib_pibase {
 				$content.=mysql_real_escape_string(substr($key,1,strlen($key)-2));
 			} else {
 				if (array_key_exists($key,$allFields)) {
-					$content.=$this->getValueFromSession($allFields[$key]);
+					$val=$this->getValueFromSession($allFields[$key]);
+					if (is_array($val)) $val=implode(',',$val);
+					$content.=$val;
 				}
 				else {
 					return 'invalid configuration';
@@ -325,10 +318,9 @@ class tx_feusermanagement_pi1 extends tslib_pibase {
 		}
 		return $content;
 	}
-	function getValueFromSession($field) {
-		
+	function getValueFromSession($field,$dummy=0) {
 		$sesVal=$this->modelLib->getValueFromSession($field->name,$this);
-		#$sesVal=$GLOBALS["TSFE"]->fe_user->getKey('ses',$this->prefixId.$field->name);
+		
 		if ($sesVal) return $sesVal;
 		if ($field->value) return $field->value; //Wert der übers Typoscript übergeben wurde, für z.B. Hidden-Fields
 		return;
@@ -343,34 +335,29 @@ class tx_feusermanagement_pi1 extends tslib_pibase {
 
 		$allFields=$this->modelLib->getAllFields($this);
 		$map=array();
-		$refindexArr=array();
 		$maparr=getTSValue('feuser_map',$this->conf);
 		foreach($maparr as $fe_name=>$field_name) {
-			$field=$allFields[$field_name];
-			
-			if (is_object($field)&&$field->type=='upload') {
+			$currField=$allFields[$field_name];
+			// If Upload-File Special handling is needed
+			if (is_object($currField)&&$currField->type=='upload') {
 				$files=explode(chr(1),$this->getValueFromSession($allFields[$field_name]));
-				$tempFilename=$files[0];
-				$origFilename=$files[1];
-				$path=t3lib_div::getIndpEnv('TYPO3_DOCUMENT_ROOT').'/'.$this->uploadDir;
-				$newName=$this->modelLib->getFreeFilename($path,$origFilename,$this->conf['config.']['upload_file_prefix']);
-				move_uploaded_file($tempFilename,$path.$newName);
+				if (count($files)==2) {
+					$tempFilename=$files[0];
+					$origFilename=$files[1];
+					$path=t3lib_div::getIndpEnv('TYPO3_DOCUMENT_ROOT').'/'.$this->uploadDir;
+					$newName=$this->modelLib->getFreeFilename($path,$origFilename,$this->conf['config.']['upload_file_prefix']);
+					move_uploaded_file($tempFilename,$path.$newName);
+					$map[$fe_name]=$this->modelLib->secureDataBeforeInsertUpdate($this->uploadDir.$newName);
+				} 
 				
-				$map[$fe_name]=$this->modelLib->secureDataBeforeInsertUpdate($this->uploadDir.$newName);
-				
-				$refindexArr[]=array(
-					'tablename'=>'fe_users',
-					'recuid'=>0,
-					'field'=>$fe_name,
-					'ref_table'=>'_FILE',
-					'ref_string'=>$map[$fe_name]
-				);
 				continue;
 			}
+			// get the Value - already formated correctly for the DB
 			$map[$fe_name]=$this->modelLib->secureDataBeforeInsertUpdate($this->getValuesFromUserMapString($field_name),$this);
 			if ($fe_name=='password') {
+				// save cleartextpassword to Session
 				$this->modelLib->saveValueToSession('password',$map['password'],$this);
-				#$GLOBALS["TSFE"]->fe_user->setKey('ses',$this->prefixId.'password',$map['password']);
+				// If wanted - do md5-hashing
 				if (getTSValue('config.useMD5',$this->conf)) {
 					$map['password']=md5($map['password']);
 				}
@@ -414,17 +401,6 @@ class tx_feusermanagement_pi1 extends tslib_pibase {
 		
 		$GLOBALS['TYPO3_DB']->sql_query($sql);
 		$id=$GLOBALS['TYPO3_DB']->sql_insert_id ();
-		
-		## Setting Refindexes for uploaded Files ##
-		foreach ($refindexArr as $refArr) {
-			### NOT YET WORKING PROPERLY ###
-			/*
-			$refArr['recuid']=$id;
-			$refArr['hash']=md5(implode('///',$refArr));
-			$sql='INSERT INTO sys_refindex ('.implode(',',array_keys($refArr)).') VALUES("'.implode('","',$refArr).'")';
-			$GLOBALS['TYPO3_DB']->sql_query($sql);
-			*/
-		}
 		
 		### HOOK afterregistration ###
 		if (is_array($GLOBALS['TYPO3_CONF_VARS']['EXTCONF'][$this->extKey]['feuser_write'])) {
@@ -473,9 +449,7 @@ class tx_feusermanagement_pi1 extends tslib_pibase {
 			//FIXME: Check Parameter 
 			###if ($this->requireAdminConfirm) $this->generateAdminMailUserConfirmation($row); 
 		}
-		
 		if (getTSValue('config.userNotify',$this->conf)) $this->generateUserMailNotify($id);
-
 	}
 
 	/**
@@ -552,18 +526,14 @@ class tx_feusermanagement_pi1 extends tslib_pibase {
 		$adminToken=$row_feuser['registration_token'];#md5($TYPO3_CONF_VARS['SYS']['encryptionKey'].$row['registration_token']);
 		$confirmLink=$this->baseURL.$this->pi_getPageLink($GLOBALS['TSFE']->id,$target='',$urlParameters=array($this->prefixId.'[adminAction]'=>'confirm',$this->prefixId.'[token]'=>md5($adminToken),$this->prefixId.'[fe_user]'=>$row_feuser['uid']));
 		$declineLink=$this->baseURL.$this->pi_getPageLink($GLOBALS['TSFE']->id,$target='',$urlParameters=array($this->prefixId.'[adminAction]'=>'decline',$this->prefixId.'[token]'=>md5($adminToken),$this->prefixId.'[fe_user]'=>$row_feuser['uid']));
-		#$markerArr["###ADMIN_ACCEPT###"]=$confirmLink;
-		#$markerArr["###ADMIN_DECLINE###"]=$declineLink;
+
 		$markerArr["###ADMIN_ACCEPT###"]="<a href=".$confirmLink.">".$confirmLink."</a>";
 		$markerArr["###ADMIN_DECLINE###"]="<a href=".$declineLink.">".$declineLink."</a>";
 		$disabled=0;
 		if ($this->requireAdminConfirm) $disabled=1;
-
 		$mailTemplate=$this->cObj->getSubpart($this->templatefile,'ADMIN_MAIL_USER_CONFIRMATION');
-
 		$mailCont=str_replace(array_keys($markerArr),$markerArr,$mailTemplate);
 		$adminAddr=getTSValue('config.adminMail',$this->conf);
-
 		$adminAddr=getTSValue('config.adminMail',$this->conf);
 		$adminSubject=getTSValue('config.adminMailSubject',$this->conf);
 		$fromMail=getTSValue('config.mailFromEMail',$this->conf);
@@ -760,10 +730,6 @@ class tx_feusermanagement_pi1 extends tslib_pibase {
 	 */
 	function clearSessionData() {
 		$this->modelLib->clearValuesInSession($this);
-		#$allFields=$this->modelLib->getAllFields($this);
-		#foreach ($allFields as $field) {
-		#	$GLOBALS["TSFE"]->fe_user->setKey('ses',$this->prefixId.$field->name,0);
-		#}
 	}
 
 	/**

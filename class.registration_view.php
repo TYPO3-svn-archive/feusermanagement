@@ -3,13 +3,14 @@
 class registration_view {
 	var $emailReg='^[\\w-_\.+]*[\\w-_\.]\@([\\w-_]+\\.)+[\\w]+[\\w]$';
 	var $passwordReg='^.*(?=.{6,})(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).*$';
+	var $userNameReg='^[^A-Z]$';
 	private function getFieldValidationJS($field,$obj) {
 		if (!$field->jsvalidation) return;
 
 		$js='';
-		$validations=split(',',$field->validation);
+		$validations=explode(',',$field->validation);
 		foreach($validations as $validation) {
-			switch ($field->validation) {
+			switch ($validation) {
 				case 'email':
 					$reg=str_replace(chr(92),chr(92).chr(92),$this->emailReg);
 					$js.='
@@ -33,7 +34,17 @@ class registration_view {
 						}
 					';
 					break;
-
+				case 'username':
+					$reg=str_replace(chr(92),chr(92).chr(92),$this->userNameReg);
+					$js.='
+						var '.$field->htmlID.'_val=document.getElementById("'.$field->htmlID.'").value;
+						var regex = new RegExp("'.$reg.'");
+						if (!regex.test('.$field->htmlID.'_val)) {
+							doSubmit=false;
+							alertMessage="'.$obj->prepareMessage(array($obj->pi_getLL('username_error','',FALSE),$field->label)).'";
+						}
+					';
+					break;
 				case 'regExp':
 					$reg=str_replace(chr(92),chr(92).chr(92),$field->regExp);
 					$js.='
@@ -175,64 +186,82 @@ function '.$obj->prefixId.'_check_FormSubmit() {
 				';
 				*/
 			}
-			switch ($field->validation) {
-				case "email":
-					if (!($falseAction)) $falseAction="alert(".$obj->pi_getLL('email_error_value_js','',FALSE).");";
-					$reg=str_replace(chr(92),chr(92).chr(92),$this->emailReg);
-					$js.='
-					function test'.$field->htmlID.'(value) {
-					     var regex = new RegExp("'.$reg.'");
-					     if (regex.test(value)) {
-							'.$trueAction.'
-						 } else if (value.length>0){
-							'.$falseAction.'
-						 }
-					  }
-					';
-					break;
-				case "password":
-					$reg=str_replace(chr(92),chr(92).chr(92),$this->passwordReg);
-					if (!($falseAction)) $falseAction="alert('".$obj->pi_getLL('password_error','',FALSE)."');";
-					$js.='
-					function test'.$field->htmlID.'(value) {
-					     var regex = new RegExp("'.$reg.'");
-					     if (regex.test(value)) {
-							'.$trueAction.'
-						 } else if (value.length>0){
-							'.$falseAction.'
-						 }
-					  }
-					';
+			$validations=explode(',',$field->validation);
+			#foreach ($validations as $validation) {
+			if ($validation=$validations[0]) {
+				switch ($validation) {
+					case 'email':
+						if (!($falseAction)) $falseAction="alert(".$obj->pi_getLL('email_error_value_js','',FALSE).");";
+						$reg=str_replace(chr(92),chr(92).chr(92),$this->emailReg);
+						$js.='
+						function test'.$field->htmlID.'(value) {
+						     var regex = new RegExp("'.$reg.'");
+						     if (regex.test(value)) {
+								'.$trueAction.'
+							 } else if (value.length>0){
+								'.$falseAction.'
+							 }
+						  }
+						';
+						break;
+					case 'password':
+						$reg=str_replace(chr(92),chr(92).chr(92),$this->passwordReg);
+						if (!($falseAction)) $falseAction="alert('".$obj->pi_getLL('password_error','',FALSE)."');";
+						$js.='
+						function test'.$field->htmlID.'(value) {
+						     var regex = new RegExp("'.$reg.'");
+						     if (regex.test(value)) {
+								'.$trueAction.'
+							 } else if (value.length>0){
+								'.$falseAction.'
+							 }
+						  }
+						';
 
-					break;
-				case "regExp":
-					$reg=str_replace(chr(92),chr(92).chr(92),$field->regExp);
-					if (!($falseAction)) $falseAction="alert('".$obj->prepareMessage(array($obj->pi_getLL('pattern_error','',FALSE),$field->label))."');";
-					$js.='
-					function test'.$field->htmlID.'(value) {
-					     var regex = new RegExp("'.$reg.'");
-					     if (regex.test(value)) {
-							'.$trueAction.'
-						 } else {
-							'.$falseAction.'
-						 }
-					  }
-					';
-					break;
-				case "user":
-					$js=$field->onBlurCode;
-					break;
-				case "hook":
-					if (is_array($GLOBALS['TYPO3_CONF_VARS']['EXTCONF'][$obj->extKey]['fieldOnBlur'])) {
-						foreach($GLOBALS['TYPO3_CONF_VARS']['EXTCONF'][$obj->extKey]['fieldOnBlur'] as $userFunc) {
-							$params = array(
-								'field'=>$field,
-							);
-							$js.=t3lib_div::callUserFunction($userFunc, $params, $obj);
+						break;
+					case 'regExp':
+						$reg=str_replace(chr(92),chr(92).chr(92),$field->regExp);
+						if (!($falseAction)) $falseAction="alert('".$obj->prepareMessage(array($obj->pi_getLL('pattern_error','',FALSE),$field->label))."');";
+						$js.='
+						function test'.$field->htmlID.'(value) {
+						     var regex = new RegExp("'.$reg.'");
+						     if (regex.test(value)) {
+								'.$trueAction.'
+							 } else {
+								'.$falseAction.'
+							 }
+						  }
+						';
+						break;
+					case 'user':
+						$js=$field->onBlurCode;
+						break;
+					case 'username':
+						$reg=str_replace(chr(92),chr(92).chr(92),$this->userNameReg);
+						if (!($falseAction)) $falseAction="alert('".$obj->prepareMessage(array($obj->pi_getLL('username_error','',FALSE),$field->label))."');";
+						$js.='
+						function test'.$field->htmlID.'(value) {
+						     var regex = new RegExp("'.$reg.'");
+						     if (regex.test(value)) {
+								'.$trueAction.'
+							 } else {
+								'.$falseAction.'
+							 }
+						  }
+						';
+						break;
+					case 'hook':
+						if (is_array($GLOBALS['TYPO3_CONF_VARS']['EXTCONF'][$obj->extKey]['fieldOnBlur'])) {
+							foreach($GLOBALS['TYPO3_CONF_VARS']['EXTCONF'][$obj->extKey]['fieldOnBlur'] as $userFunc) {
+								$params = array(
+									'field'=>$field,
+								);
+								$js.=t3lib_div::callUserFunction($userFunc, $params, $obj);
+							}
 						}
-					}
 
-				break;
+					break;
+				}
 			}
 		}
 		return $js;
@@ -287,6 +316,20 @@ function '.$obj->prefixId.'_check_FormSubmit() {
 					}
 					$temp.='</select>';
 					break;
+				case "multiple":
+					$temp='<select name="'.$obj->prefixId.'['.$field->htmlID.'][]" multiple="multiple" id="'.$field->htmlID.'" title="'.$field->tooltip.'">';
+					if ($field->includeEmptyOption) {
+						$emptyLabel=$obj->pi_getLL('emptyOptionLabel');
+						if ($field->emptyLabel) $emptyLabel=$field->emptyLabel;
+						$temp.='<option value="0">'.$emptyLabel.'</option>';
+					}
+					foreach ($field->list as $arr) {
+						if (!is_array($field->value)) $field->value=array();
+						$selected=(in_array($arr['value'],$field->value))?'selected="selected"':'';
+						$temp.='<option value="'.$arr["value"].'" '.$selected.'>'.$obj->getString($arr["label"]).'</option>';
+					}
+					$temp.='</select>';
+				break;
 				case "radio":
 					$temp='';
 					foreach ($field->list as $arr) {
