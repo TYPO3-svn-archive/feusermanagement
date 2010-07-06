@@ -51,7 +51,11 @@ class tx_feusermanagement_pi2 extends tslib_pibase {
 	var $templatefile='';
 	var $step=0;
 	var $errCount=0;
-	var $uploadDir='uploads/';
+		# default fe_user image folder, see: $TCA['fe_users']['columns']['image']['config']['uploadfolder']
+		# if you change in TS, also change TCA
+	var $uploadDir='uploads/pics/';
+
+
 	/**
 	 * The main method of the PlugIn
 	 *
@@ -329,7 +333,8 @@ class tx_feusermanagement_pi2 extends tslib_pibase {
 					$path=t3lib_div::getIndpEnv('TYPO3_DOCUMENT_ROOT').'/'.$this->uploadDir;
 					$newName=$this->modelLib->getFreeFilename($path,$origFilename,$this->conf['config.']['upload_file_prefix']);
 					move_uploaded_file($tempFilename,$path.$newName);
-					$map[$fe_name]=$this->modelLib->secureDataBeforeInsertUpdate($this->uploadDir.$newName);
+					#$map[$fe_name]=$this->modelLib->secureDataBeforeInsertUpdate($this->uploadDir.$newName);
+					$map[$fe_name]=$this->modelLib->secureDataBeforeInsertUpdate($newName);
 				} 
 				
 				continue;

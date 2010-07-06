@@ -14,7 +14,11 @@ plugin.tx_feusermanagement_pi1 {
     usersConfirmedGroup=0
     usersAdminConfirmedPid=0
     usersAdminConfirmedGroup=0
-     
+
+		# default fe_user image folder, see: $TCA['fe_users']['columns']['image']['config']['uploadfolder']
+		# if you change in TS, also change TCA
+	#upload_dir = uploads/pics
+
     userConfirmation=1
     adminConfirmation=0
     		#only works if confirmation is not required
