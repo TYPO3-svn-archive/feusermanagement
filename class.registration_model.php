@@ -130,7 +130,8 @@
 					}
 					if ($field->type=='multiple') $field->value=explode(',',$field->value);
 				}
-				$field->notCheckedMessage=($field->type=="checkbox")?("'".$obj->prepareMessage(array($obj->pi_getLL('email_error','',FALSE),$field->label))):$obj->prepareMessage(array($obj->pi_getLL('not_enter','',FALSE),$field->label));
+				#$field->notCheckedMessage=($field->type=="checkbox")?("'".$obj->prepareMessage(array($obj->pi_getLL('email_error','',FALSE),$field->label))):$obj->prepareMessage(array($obj->pi_getLL('not_enter','',FALSE),$field->label));
+				$field->notCheckedMessage=($field->type=="checkbox")?($obj->prepareMessage(array($obj->pi_getLL('checkbox_error','',FALSE),$field->label))):$obj->prepareMessage(array($obj->pi_getLL('not_enter','',FALSE),$field->label));
 				$field->TS=$TSAttributes;
 				$field->tempID=$i;
 				$this->fields[$name]=$field;
