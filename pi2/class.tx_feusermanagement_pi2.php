@@ -361,7 +361,7 @@ class tx_feusermanagement_pi2 extends tslib_pibase {
 		
 		$sql="UPDATE fe_users SET ".$updateStr." WHERE uid='".$this->feuser_uid."'"; 
 		#t3lib_div::debug($sql,'update');
-		#$GLOBALS['TYPO3_DB']->sql_query($sql);
+		$GLOBALS['TYPO3_DB']->sql_query($sql);
 
 		if (is_array($GLOBALS['TYPO3_CONF_VARS']['EXTCONF'][$this->extKey]['feuser_write'])) {
 			foreach($GLOBALS['TYPO3_CONF_VARS']['EXTCONF'][$this->extKey]['feuser_write'] as $userFunc) {
@@ -444,10 +444,13 @@ class tx_feusermanagement_pi2 extends tslib_pibase {
 	 */
 	function getValueFromSession($field,$loadData=1) {
 		$sesVal=$this->modelLib->getValueFromSession($field->name,$this);
-		
-		if ($sesVal) return $sesVal;
-		if ($field->value) return $field->value; //Wert der übers Typoscript übergeben wurde, für z.B. Hidden-Fields
-		
+
+		if ($sesVal && $field->type!='hidden'){
+			return $sesVal;
+		}
+		if ($field->value || $field->type=='checkbox' || $field->type=='hidden'){
+			return $field->value; //Wert der uebers Typoscript uebergeben wurde, fuer z.B. Hidden-Fields
+		}
 		if (!$loadData) return false;
 		$map=$this->modelLib->getDataMap($this);
 		if ($fe_field=$map[$field->name]) {
@@ -534,6 +537,9 @@ class tx_feusermanagement_pi2 extends tslib_pibase {
 		$fields=$this->modelLib->getCurrentFields($this->conf["steps."][$step."."],$this);
 		$valid=true;
 		foreach($fields as $field) {
+			if($field->type=='checkbox' && !array_key_exists($field->htmlID,$this->piVars)) {
+				$this->piVars[$field->htmlID] = 0;
+			}
 			$valid=$this->validateLib->validateField($field,$this)&&$valid;
 			#t3lib_div::debug($valid,$field->name.'-valid');
 			
