@@ -1,6 +1,6 @@
 <?php
 
-class Field {
+class tx_feusermanagement_field {
 		public $additionalData='';
 		public $equal='';
 		public $errField='';

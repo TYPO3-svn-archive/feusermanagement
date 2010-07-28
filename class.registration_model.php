@@ -1,7 +1,7 @@
 <?php
 
 	
-	class registration_model {
+	class tx_feusermanagement_model {
 		var $fields=array();
 		/**
 		 * [Describe function...]
@@ -10,7 +10,7 @@
 		 * @param	[type]		$load_data: ...
 		 * @return	[type]		...
 		 */	
-		function getDataMap(&$obj) {
+		function getDataMap(tslib_pibase &$obj) {
 			$maparr=getTSValue('feuser_map.',$obj->conf);
 			$map=array();
 			foreach($maparr as $key=>$value) {
@@ -18,7 +18,7 @@
 			}
 			return $map;
 		}
-		function getCurrentFields($TSstep,$obj,$load_data=0) {
+		function getCurrentFields($TSstep,tslib_pibase &$obj,$load_data=0) {
 			
 			$i=0;
 			$TSfields=$TSstep["fields."];
@@ -37,7 +37,7 @@
 				}
 				
 				$htmlPrefix=($obj->conf['config.']['html_prefix'])?$obj->conf['config.']['html_prefix']:'ccm_reg_';
-				$field=new Field();
+				$field=new tx_feusermanagement_field();
 				$field->name=$name;
 				$field->label=$name;
 				$field->dbName=$dataMap[$name];
@@ -152,7 +152,7 @@
 	 * @param	[type]		$load_data: ...
 	 * @return	[type]		...
 	 */
-		function getAllFields($obj,$load_data=0) {
+	function getAllFields(tslib_pibase &$obj,$load_data=0) {
 			$allFields=array();
 			$count=$obj->getLastStepNr();
 			for ($i=0;$i<=$count;$i++) {
@@ -169,18 +169,18 @@
 	 * @param	[type]		$obj: ...
 	 * @return	[type]		...
 	 */
-		function getField($name,$obj) {
+	function getField($name,tslib_pibase &$obj) {
 			$fields=$this->getAllFields($obj);
 			if (array_key_exists($name,$fields)) return $fields[$name];
 			return "";
 		}
-		function getValueFromSession($key,$obj) {
+	function getValueFromSession($key,tslib_pibase &$obj) {
 			$sesArr=$GLOBALS["TSFE"]->fe_user->getKey('ses',$obj->prefixId);
 			
 			if (is_array($sesArr)) return $sesArr[$key];
 			return false;
 		}
-		function saveValueToSession($key,$value,$obj) {
+	function saveValueToSession($key,$value,tslib_pibase &$obj) {
 			$sesArr=$GLOBALS["TSFE"]->fe_user->getKey('ses',$obj->prefixId);
 			if (!is_array($sesArr)) $sesArr=array();
 			$sesArr[$key]=$value;

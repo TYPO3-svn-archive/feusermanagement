@@ -1,6 +1,6 @@
 <?php
 
-class registration_view {
+class tx_feusermanagement_view {
 	var $emailReg='^[\\w-_\.+]*[\\w-_\.]\@([\\w-_]+\\.)+[\\w]+[\\w]$';
 	var $passwordReg='^.*(?=.{6,})(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).*$';
 	var $userNameReg='^[^A-Z]$';

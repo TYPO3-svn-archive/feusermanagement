@@ -23,11 +23,7 @@
 ***************************************************************/
 
 require_once(PATH_tslib.'class.tslib_pibase.php');
-require_once(t3lib_extMgm::extPath('feusermanagement') . 'class.Field.php');
-require_once(t3lib_extMgm::extPath('feusermanagement') . 'class.registration_model.php');
-require_once(t3lib_extMgm::extPath('feusermanagement') . 'class.registration_view.php');
 require_once(t3lib_extMgm::extPath('feusermanagement') . 'lib_general.php');
-require_once(t3lib_extMgm::extPath('feusermanagement') . 'class.registration_validation.php');
 
 /**
  * Plugin 'ccm_registration_edit' for the 'fe_registration_process' extension.
@@ -66,10 +62,10 @@ class tx_feusermanagement_pi2 extends tslib_pibase {
 	function init() {
 		$this->baseURL=getTSValue('config.baseURL',$GLOBALS['TSFE']->tmpl->setup);
 		$this->requiredMarker=getTSValue('config.requiredMarker',$this->conf);
-		$this->modelLib=t3lib_div::makeInstance('registration_model');
-		$this->viewLib=t3lib_div::makeInstance('registration_view');
+		$this->modelLib=t3lib_div::makeInstance('tx_feusermanagement_model');
+		$this->viewLib=t3lib_div::makeInstance('tx_feusermanagement_view');
+		$this->validateLib=t3lib_div::makeInstance('tx_feusermanagement_validation');
 		$this->feuser_uid=$GLOBALS['TSFE']->fe_user->user['uid'];
-		$this->validateLib=t3lib_div::makeInstance('registration_validation');
 		$this->templateFileName=getTSValue('config.template',$this->conf);
 		$this->templatefile = $this->cObj->fileResource($this->templateFileName);
 		if ($uploadDir=getTSValue('config.upload_dir',$this->conf)) $this->uploadDir=$uploadDir;

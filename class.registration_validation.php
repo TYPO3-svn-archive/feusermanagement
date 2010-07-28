@@ -1,6 +1,6 @@
 <?php
 	
-	class registration_validation {
+	class tx_feusermanagement_validation {
 		function validateField(&$field,&$obj) {
 			$valid=true;
 			if ($field->required) {
