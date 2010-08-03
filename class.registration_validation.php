@@ -114,7 +114,7 @@
 
 			if (!(isset($obj->piVars[$field->htmlID]) && ($obj->piVars[$field->htmlID]) )&& !($obj->getValueFromSession($field,0))) {
 				if ($field->type=='upload') {
-					t3lib_div::debug($_FILES[$obj->prefixId]);
+					#t3lib_div::debug($_FILES[$obj->prefixId]);
 					if ($_FILES[$obj->prefixId]['name'][$field->htmlID]) {
 						
 					} else {
