@@ -163,9 +163,11 @@ class tx_feusermanagement_pi1 extends tx_feusermanagement_pibase {
 		$markerArr=array();
 		$htmlFields=array();
 		$allFields=$this->modelLib->getAllFields($this);
-		
+		foreach ($allFields as $field) {
+			t3lib_div::debug($this->modelLib->getValueFromSession($field->name,$this),$field->name);
+		}
 		$markerArr["###SUBMIT###"]='<input type="submit" value="'.$this->pi_getLL('submit_label','',FALSE).'" />';
-		$markerArr["###STEP###"]=$step." / ".$lastStep;
+		
 
 		###OLD VALUES###
 		$markerArr=$this->viewLib->fillMarkers($allFields,$markerArr,$this);

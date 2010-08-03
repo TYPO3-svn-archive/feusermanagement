@@ -85,6 +85,17 @@ class tx_feusermanagement_view {
 						alertMessage="'.$field->notCheckedMessage.'";
 					}
 				';
+			} elseif($field->type=='radio') {
+				$js.='
+					doSubmit=false;
+					alertMessage="'.$field->notCheckedMessage.'"
+					elements=document.getElementsByName("'.$obj->prefixId.'['.$field->htmlID.']");
+					for (i=0;i<elements.length;i++) {
+						if(elements[i].checked) doSubmit=true;
+						alertMessage="";
+					}
+				';
+
 			} else {
 				$js.='
 					if (!((document.getElementById("'.$field->htmlID.'").value.length)>0)) {
