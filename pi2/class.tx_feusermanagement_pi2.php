@@ -32,7 +32,7 @@ require_once(t3lib_extMgm::extPath('feusermanagement') . 'lib_general.php');
  * @package	TYPO3
  * @subpackage	tx_feregistrationprocess
  */
-class tx_feusermanagement_pi2 extends tslib_pibase {
+class tx_feusermanagement_pi2 extends tx_feusermanagement_pibase {
 	var $prefixId      = 'tx_feusermanagement_pi2';		// Same as class name
 	var $scriptRelPath = 'pi2/class.tx_feusermanagement_pi2.php';	// Path to this script relative to the extension dir.
 	var $extKey        = 'feusermanagement';	// The extension key.
@@ -40,12 +40,6 @@ class tx_feusermanagement_pi2 extends tslib_pibase {
 	var $feuser_uid='';
 	var $baseURL='';
 	var $requiredMarker='';
-	var $modelLib=null;
-	var $viewLib=null;
-	var $validateLib=null;
-	var $templateFileName='';
-	var $templatefile='';
-	var $step=0;
 	var $errCount=0;
 		# default fe_user image folder, see: $TCA['fe_users']['columns']['image']['config']['uploadfolder']
 		# if you change in TS, also change TCA
@@ -60,15 +54,8 @@ class tx_feusermanagement_pi2 extends tslib_pibase {
 	 * @return	The		content that is displayed on the website
 	 */
 	function init() {
-		$this->baseURL=getTSValue('config.baseURL',$GLOBALS['TSFE']->tmpl->setup);
-		$this->requiredMarker=getTSValue('config.requiredMarker',$this->conf);
-		$this->modelLib=t3lib_div::makeInstance('tx_feusermanagement_model');
-		$this->viewLib=t3lib_div::makeInstance('tx_feusermanagement_view');
-		$this->validateLib=t3lib_div::makeInstance('tx_feusermanagement_validation');
+		parent::init();
 		$this->feuser_uid=$GLOBALS['TSFE']->fe_user->user['uid'];
-		$this->templateFileName=getTSValue('config.template',$this->conf);
-		$this->templatefile = $this->cObj->fileResource($this->templateFileName);
-		if ($uploadDir=getTSValue('config.upload_dir',$this->conf)) $this->uploadDir=$uploadDir;
 	}
 
 	/**
@@ -125,7 +112,7 @@ class tx_feusermanagement_pi2 extends tslib_pibase {
 		if ($step>$lastStep) {
 			$final=true;
 		}
-		$this->step=$step;
+		$this->currStep=$step;
 		### GET TEMPLATES ###
 		$template=$this->cObj->getSubpart($this->templatefile,"STEP_".$step);
 		#$errorTempl=$this->cObj->getSubpart($this->templatefile,"ERROR_PART");
@@ -238,74 +225,6 @@ class tx_feusermanagement_pi2 extends tslib_pibase {
 	}
 
 	
-
-	
-
-	/**
-	 * [Describe function...]
-	 *
-	 * @param	[type]		$step: ...
-	 * @return	[type]		...
-	 */
-	function writeLastStepToSession($step) {
-		$fields=$this->modelLib->getCurrentFields($this->conf["steps."][$step."."],$this);
-		foreach($fields as $field) {
-
-			$id=$field->htmlID;
-			
-			if (isset($this->piVars[$id]) || $field->type=="checkbox") { 
-				$value=$this->piVars[$id];	
-				$this->modelLib->saveValueToSession($field->name,$value,$this);
-				
-				### HOOK afterValueInsert ###
-				if (is_array($GLOBALS['TYPO3_CONF_VARS']['EXTCONF'][$this->extKey]['afterValueInsert_pi2'])) {
-					foreach($GLOBALS['TYPO3_CONF_VARS']['EXTCONF'][$this->extKey]['afterValueInsert_pi2'] as $userFunc) {
-						$params = array(
-							'field' => $field,
-							'value'=>$value,
-						);
-						t3lib_div::callUserFunction($userFunc, $params, $this);
-					}
-				}
-			}
-			if ($field->type=='upload') {
-				
-				$tmpFile=$_FILES['tx_feusermanagement_pi2']['tmp_name'][$field->htmlID];
-				$origFile=$_FILES['tx_feusermanagement_pi2']['name'][$field->htmlID];
-				if (!$tmpFile||!$origFile) {
-					
-					$this->modelLib->saveValueToSession($field->name,'',$this);
-					continue;
-				}
-				$value=$tmpFile.chr(1).$origFile;
-				$this->modelLib->saveValueToSession($field->name,$value,$this);
-				
-			}
-		}
-	}
-	function getValuesFromUserMapString($string) {
-		
-		$allFields=$this->modelLib->getAllFields($this);
-		
-		$arr=explode('+',$string);
-		$content='';
-		foreach($arr as $key) {
-			if (substr($key,0,1)=='"' && substr($key,strlen($key)-1)=='"') {
-				$content.=mysql_real_escape_string(substr($key,1,strlen($key)-2));
-			} else {
-				if (array_key_exists($key,$allFields)) {
-					$val=$this->getValueFromSession($allFields[$key]);
-					if (is_array($val)) $val=implode(',',$val);
-					$content.=$val;
-				}
-				else {
-					return 'invalid configuration';
-				}
-			}
-		}
-		
-		return $content;
-	}
 	/**
 	 * [Describe function...]
 	 *
@@ -367,69 +286,6 @@ class tx_feusermanagement_pi2 extends tslib_pibase {
 				t3lib_div::callUserFunction($userFunc, $params, $this);
 			}
 		}
-	}
-
-	/**
-	 * [Describe function...]
-	 *
-	 * @return	[type]		...
-	 */
-	function getLastStepNr() {
-		$steps=$this->conf["steps."];
-		$lastStep=0;
-		foreach($steps as $key=>$value) {
-			if ($dotpos=strpos($key,".")) {
-				$step=substr($key,0,$dotpos);
-				if (is_numeric($step)) {
-					$lastStep=max($lastStep,$step);
-				}
-			}
-		}
-		return $lastStep;
-	}
-
-	/**
-	 * [Describe function...]
-	 *
-	 * @param	[type]		$key: ...
-	 * @return	[type]		...
-	 */
-	function removeDot($key) {
-		if ($dotpos=strpos($key,".")) {
-			$key=substr($key,0,$dotpos);
-		}
-		return $key;
-	}
-
-	/**
-	 * [Describe function...]
-	 *
-	 * @param	[type]		$value: ...
-	 * @return	[type]		...
-	 */
-	function getString($value) {
-		if (strpos($value,"LL_user")===0) {
-			$str=$this->pi_getLL(substr($value,strpos($value,"user")),'',FALSE);
-		} else {
-			$str=$value;
-		}
-		return $str;
-	}
-
-	/**
-	 * [Describe function...]
-	 *
-	 * @param	[type]		$arr: ...
-	 * @return	[type]		...
-	 */
-	function prepareMessage($arr) {
-		if (is_array($arr)&&(count($arr)>0)) {
-			$text=$arr[0];
-			for ($i=1;$i<count($arr);$i++) {
-				$text=str_replace("###".$i."###",$arr[$i],$text);
-			}
-		}
-		return $text;
 	}
 
 	/**
@@ -529,7 +385,6 @@ class tx_feusermanagement_pi2 extends tslib_pibase {
 	 * @return	[type]		...
 	 */
 	function validateInputLastStep($step) {
-
 		$fields=$this->modelLib->getCurrentFields($this->conf["steps."][$step."."],$this);
 		$valid=true;
 		foreach($fields as $field) {
@@ -537,8 +392,6 @@ class tx_feusermanagement_pi2 extends tslib_pibase {
 				$this->piVars[$field->htmlID] = 0;
 			}
 			$valid=$this->validateLib->validateField($field,$this)&&$valid;
-			#t3lib_div::debug($valid,$field->name.'-valid');
-			
 		}
 		### HOOK stepValidation ###
 		if (is_array($GLOBALS['TYPO3_CONF_VARS']['EXTCONF'][$this->extKey]['stepValidation'])) {

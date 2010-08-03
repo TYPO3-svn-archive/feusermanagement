@@ -8,5 +8,7 @@ return array(
 	'tx_feusermanagement_model' => $extensionPath . 'class.registration_model.php',
 	'tx_feusermanagement_validation' => $extensionPath . 'class.registration_validation.php',
 	'tx_feusermanagement_view' => $extensionPath . 'class.registration_view.php',
+	'tx_feusermanagement_pibase' => $extensionPath . 'lib/class.tx_feusermanagement_pibase.php',
+	'tx_feusermanagement_mailer' => $extensionPath . 'lib/class.tx_feusermanagement_mailer.php',
 );
 ?>

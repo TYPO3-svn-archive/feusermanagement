@@ -332,8 +332,12 @@ function '.$obj->prefixId.'_check_FormSubmit() {
 				break;
 				case "radio":
 					$temp='';
+					$count=0;
 					foreach ($field->list as $arr) {
-						$temp.='<input type="radio" name="'.$obj->prefixId.'['.$field->htmlID.']" id="'.$field->htmlID.'" value="'.$arr["value"].'"  />'.$obj->getString($arr["label"]);
+						$checked='';
+						if ($obj->piVars[$field->htmlID]==$arr['value']||($obj->getValueFromSession($field)==$arr['value'])) $checked='checked="checked"';
+						$temp.='<input type="radio" name="'.$obj->prefixId.'['.$field->htmlID.']" id="'.$field->htmlID.'_'.$count.'" value="'.$arr["value"].'" '.$checked.'  />'.$obj->getString($arr["label"]);
+						$count++;
 					}
 					break;
 				case 'upload':
