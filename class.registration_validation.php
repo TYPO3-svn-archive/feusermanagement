@@ -1,7 +1,10 @@
 <?php
 	
 	class tx_feusermanagement_validation {
-		function validateField(&$field,&$obj) {
+		function validateField(&$field,&$obj,$dontCheckPassword=false) {
+			
+			if ($dontCheckPassword&&$field->type=='password'&&!strlen($obj->piVars[$field->htmlID])) return true;
+			
 			$valid=true;
 			if ($field->required) {
 				$valid=$valid&&$this->validateRequire($field,$obj);
@@ -124,7 +127,7 @@
 					}
 				} else {
 					
-					$valid=$obj->modelLib->getValueFromSession($field->htmlId,$obj);
+					$valid=$obj->modelLib->getValueFromSession($field->name,$obj);
 					$field->errMessages[]=$obj->prepareMessage(array($obj->pi_getLL('not_enter','',FALSE),$field->label));
 					
 				}

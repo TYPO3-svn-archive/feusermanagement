@@ -188,6 +188,7 @@
 		}
 		function clearValuesInSession($obj) {
 			$GLOBALS['TSFE']->fe_user->setKey('ses',$obj->prefixId,false);
+			$GLOBALS["TSFE"]->fe_user->setKey('ses','ccm_reg_max_step',false);
 		}
 		function secureDataBeforeInsertUpdate($value,$obj=null) {
 			if (is_array($value)) {
