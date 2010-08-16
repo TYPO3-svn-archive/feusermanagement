@@ -15,9 +15,11 @@ class tx_feusermanagement_mailer {
 		$adminToken=$row_feuser['registration_token'];#md5($TYPO3_CONF_VARS['SYS']['encryptionKey'].$row['registration_token']);
 		$confirmLink=$obj->baseURL.$obj->pi_getPageLink($GLOBALS['TSFE']->id,$target='',$urlParameters=array($obj->prefixId.'[adminAction]'=>'confirm',$obj->prefixId.'[token]'=>md5($adminToken),$obj->prefixId.'[fe_user]'=>$row_feuser['uid']));
 		$declineLink=$obj->baseURL.$obj->pi_getPageLink($GLOBALS['TSFE']->id,$target='',$urlParameters=array($obj->prefixId.'[adminAction]'=>'decline',$obj->prefixId.'[token]'=>md5($adminToken),$obj->prefixId.'[fe_user]'=>$row_feuser['uid']));
+		$confirmText=$obj->pi_getLL('confirm_label','CONFIRM');
+		$declineText=$obj->pi_getLL('decline_label','DECLINE');
 
-		$markerArr["###ADMIN_ACCEPT###"]="<a href=".$confirmLink.">".$confirmLink."</a>";
-		$markerArr["###ADMIN_DECLINE###"]="<a href=".$declineLink.">".$declineLink."</a>";
+		$markerArr["###ADMIN_ACCEPT###"]="<a href=".$confirmLink.">".$confirmText."</a>";
+		$markerArr["###ADMIN_DECLINE###"]="<a href=".$declineLink.">".$declineText."</a>";
 		$disabled=0;
 		if ($obj->requireAdminConfirm) $disabled=1;
 		$mailTemplate=$obj->cObj->getSubpart($obj->templatefile,'ADMIN_MAIL_USER_CONFIRMATION');
@@ -49,9 +51,9 @@ class tx_feusermanagement_mailer {
 		$res=$GLOBALS['TYPO3_DB']->sql_query($sql);
 		$user = $GLOBALS['TYPO3_DB']->sql_fetch_assoc($res);
 		$confirmLink=$obj->baseURL.$obj->cObj->getTypoLink_URL($GLOBALS['TSFE']->id,array($obj->prefixId.'[userConfirmationToken]'=>$user['registration_token'],$obj->prefixId.'[fe_user]'=>$id));
+		$confirmText=$obj->pi_getLL('confirm_label','CONFIRM');
 		$markerArr=array();
-		#$markerArr['###CONFIRMATION_LINK###']=$confirmLink;
-		$markerArr['###CONFIRMATION_LINK###']="<a href=".$confirmLink.">".$confirmLink."</a>";
+		$markerArr['###CONFIRMATION_LINK###']="<a href=".$confirmLink.">".$confirmText."</a>";
 		foreach($user as $key=>$value) {
 			$markerArr['###FE_'.strtoupper($key).'###']=$value;
 		}
