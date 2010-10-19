@@ -85,6 +85,18 @@ class tx_feusermanagement_pi1 extends tx_feusermanagement_pibase {
 		$checkInput=true;
 		
 		
+		### HOOK edit Configuration ###
+		if (is_array($GLOBALS['TYPO3_CONF_VARS']['EXTCONF'][$this->extKey]['editConfiguration'])) {
+			foreach($GLOBALS['TYPO3_CONF_VARS']['EXTCONF'][$this->extKey]['editConfiguration'] as $userFunc) {
+				$params = array(
+					'config' => &$this->conf,
+					'step' =>$step,
+				);
+				t3lib_div::callUserFunction($userFunc, $params, $this);
+			}
+		}
+		
+		
 		### SPRUNG AUF VORGÄNGERSEITE? ###
 		if ($this->piVars['backlinkToStep']&&$GLOBALS["TSFE"]->fe_user->getKey('ses','ccm_reg_step')) { ###SESSION EXISTIERT, UND ER WILL ZURÜCK ###
 			$back=$this->piVars["backlinkToStep"];
