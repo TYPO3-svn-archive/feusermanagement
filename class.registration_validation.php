@@ -18,7 +18,7 @@
 			if ($field->equal) {
 				$valid=$valid&&$this->validateEquality($field,$obj);
 			}
-			if ($field->validation) {
+			if ($field->validation && $obj->piVars[$field->htmlID]) {
 				switch ($field->validation) {
 					case "email":
 						$pattern = '/'.$obj->viewLib->emailReg.'/';
