@@ -402,6 +402,7 @@ function '.$obj->prefixId.'_check_FormSubmit() {
 				
 				$errString=$obj->cObj->stdWrap($errString,$wrapConf);
 				$markerArr['###'.$field->markerName.'_ERROR###']='<div id="'.$field->errField.'">'.$errString.'</div>';
+				$markerArr['###GLOBAL_ERROR_MARKER###'].='<div id="'.$field->errField.'">'.$errString.'</div>';
 			}
 			$htmlFields[$field->markerName]=$temp;
 
