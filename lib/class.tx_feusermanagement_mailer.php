@@ -53,22 +53,34 @@ class tx_feusermanagement_mailer {
 		$confirmLink=$obj->baseURL.$obj->cObj->getTypoLink_URL($GLOBALS['TSFE']->id,array($obj->prefixId.'[userConfirmationToken]'=>$user['registration_token'],$obj->prefixId.'[fe_user]'=>$id));
 		$confirmText=$obj->pi_getLL('confirm_label','CONFIRM');
 		$markerArr=array();
-		$markerArr['###CONFIRMATION_LINK###']="<a href=".$confirmLink.">".$confirmText."</a>";
+		$markerArr['###CONFIRMATION_LINK###']='<a href="'.$confirmLink.'">'.$confirmText.'</a>';
 		foreach($user as $key=>$value) {
 			$markerArr['###FE_'.strtoupper($key).'###']=$value;
 		}
-		$html=str_replace(array_keys($markerArr),$markerArr,$html);
-
-		$mailObj = t3lib_div::makeInstance('t3lib_htmlmail');
-		$mailObj->start();
-		$mailObj->recipient = $user["email"];
-		$mailObj->subject = getTSValue('config.userMailSubject',$obj->conf);
-		$mailObj->from_email = getTSValue('config.mailFromEMail',$obj->conf);
-		$mailObj->from_name = getTSValue('config.mailFromName',$obj->conf);
-		$mailObj->addPlain($html);
-		$mailObj->setHTML($mailObj->encodeMsg($html));
-		$success=$mailObj->send($user["email"]);
-
+		
+		### HOOK editConfirmationMail ###
+		if (is_array($GLOBALS['TYPO3_CONF_VARS']['EXTCONF'][$obj->extKey]['editConfirmationMail'])) {
+			foreach($GLOBALS['TYPO3_CONF_VARS']['EXTCONF'][$obj->extKey]['editConfirmationMail'] as $userFunc) {
+				$params = array(
+					'markerArr' => &$markerArr,
+					'user' =>&$user,
+				);
+				$dontSendConfirmationMail=t3lib_div::callUserFunction($userFunc, $params, $obj);
+			}
+		}
+		
+		if (!$dontSendConfirmationMail) {
+			$html=str_replace(array_keys($markerArr),$markerArr,$html);
+			$mailObj = t3lib_div::makeInstance('t3lib_htmlmail');
+			$mailObj->start();
+			$mailObj->recipient = $user["email"];
+			$mailObj->subject = getTSValue('config.userMailSubject',$obj->conf);
+			$mailObj->from_email = getTSValue('config.mailFromEMail',$obj->conf);
+			$mailObj->from_name = getTSValue('config.mailFromName',$obj->conf);
+			$mailObj->addPlain($html);
+			$mailObj->setHTML($mailObj->encodeMsg($html));
+			$success=$mailObj->send($user["email"]);
+		}
 		return $success;
 	}
 	/**

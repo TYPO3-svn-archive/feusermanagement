@@ -4,7 +4,6 @@
 		function validateField(&$field,&$obj,$dontCheckPassword=false) {
 			
 			if ($dontCheckPassword&&$field->type=='password'&&!strlen($obj->piVars[$field->htmlID])) return true;
-			
 			$valid=true;
 			if ($field->required) {
 				$valid=$valid&&$this->validateRequire($field,$obj);
@@ -46,10 +45,10 @@
 						break;
 				}
 			}
-			
 			return $valid;
 		}
 		private function validateUnique(&$field,&$obj) {
+			
 			$valid=true;
 			$value=mysql_real_escape_string($obj->piVars[$field->htmlID]);
 
@@ -117,19 +116,14 @@
 
 			if (!(isset($obj->piVars[$field->htmlID]) && ($obj->piVars[$field->htmlID]) )&& !($obj->getValueFromSession($field,0))) {
 				if ($field->type=='upload') {
-					#t3lib_div::debug($_FILES[$obj->prefixId]);
-					if ($_FILES[$obj->prefixId]['name'][$field->htmlID]) {
-						
+					if ($_FILES[$obj->prefixId]['name'][$field->htmlID]) {	
 					} else {
 						$valid=false;
 						$field->errMessages[]=$obj->prepareMessage(array($obj->pi_getLL('not_enter_file','',FALSE),$field->label));
-						
 					}
 				} else {
-					
 					$valid=$obj->modelLib->getValueFromSession($field->name,$obj);
 					$field->errMessages[]=$obj->prepareMessage(array($obj->pi_getLL('not_enter','',FALSE),$field->label));
-					
 				}
 			}
 			return $valid;

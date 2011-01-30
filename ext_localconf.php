@@ -18,5 +18,8 @@ t3lib_extMgm::addTypoScript($_EXTKEY,'editorcfg','
 
 t3lib_extMgm::addPItoST43($_EXTKEY,'pi2/class.tx_feusermanagement_pi2.php','_pi2','list_type',0);
 
+t3lib_extMgm::addPItoST43($_EXTKEY,'pi3/class.tx_feusermanagement_pi3.php','_pi3','list_type',0);
+
+
 $TYPO3_CONF_VARS['FE']['eID_include']['FEUSERMANAGEMENT']='EXT:feusermanagement/class.tx_feumajax.php';
 ?>

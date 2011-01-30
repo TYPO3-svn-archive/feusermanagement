@@ -8,6 +8,7 @@
 		<languageKey index="default" type="array">
 			<label index="pi1_title">Frontend User Registration</label>
 			<label index="pi2_title">Frontend User Edit Profile</label>
+			<label index="pi3_title">Frontend User Delete Account</label>
 		</languageKey>
 	</data>
 </T3locallang>

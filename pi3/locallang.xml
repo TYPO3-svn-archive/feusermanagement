@@ -2,23 +2,26 @@
 <T3locallang>
 	<meta type="array">
 		<type>module</type>
-		<description>Language labels for plugin &quot;tx_feusermanagement_pi1&quot;</description>
+		<description>Language labels for plugin &quot;tx_feregistrationprocess_pi3&quot;</description>
 	</meta>
 	<data type="array">
 		<languageKey index="default" type="array">
+			<label index="list_mode_1">Mode 1</label>
+			<label index="list_mode_2">Mode 2</label>
+			<label index="list_mode_3">Mode 3</label>
+			<label index="back">Back</label>
+			<label index="submit_button_label">Click here to submit value</label>
 			<label index="required_error">Field '###1###' requires Field '###2###' to be set</label>
 			<label index="not_enter">You did not enter a value for '###1###'</label>
 			<label index="unique_error">Please select a different value for the field ###1###</label>
 			<label index="equal_error">You did not enter equal values for the fields ###1### and ###2###</label>
 			<label index="email_error">You did not enter a valid email address.</label>
-			<label index="username_error">Your Username is not valid. It must be at least 6 characters including one lower case letter and one digit.</label>
-			<label index="password_error">Your password is too weak. It must be at least 6 characters including one upper case, one lower case letter and one digit.</label>
-			<label index="pattern_error">You did not enter a valid value to:###1###</label>
+			<label index="password_error">Your password is too weak. It must be at least 6 charaters including one upper case, one lower case letter and one digit.</label>
+			<label index="pattern_error">You did not enter a valid value to:</label>
 			<label index="admin_error">Internal Error, Please define pi.config.username, pi.config.password, pi.config.pid</label>
 			<label index="banned">You are banned.</label>
 			<label index="checkbox_error">You did not check the Checkbox ###1###</label>
-			<label index="username_error_value_js">value + " is not a valid username"</label>
-			<label index="email_error_value_js">value + " is not a valid mail address"</label>
+			<label index="email_error_value_js">src + " is not a valid mail address"</label>
 			<label index="back">Back</label>
 			<label index="field_nickname">Nickname</label>
 			<label index="field_nickname_tooltip">Please enter your Nickname</label>
@@ -29,17 +32,15 @@
 			<label index="field_email">Your e-mail address</label>
 			<label index="field_email_tooltip">Please enter your E-Mail address</label>
 			<label index="submit_label">Submit</label>
-			<label index="emptyOptionLabel">Please Select...</label>
-			<label index="not_enter_file">You did not select a file for ###1###</label>
-			<label index="wrong_filetype">Your file in ###1### does not match the allowed filetypes (###2###)</label>
-			<label index="wrong_filesize">Your file in ###1### is too large: max allowed size is (###2###) Bytes</label>
-			<label index="username_error">Field '###1###' may not contain uppercase letters</label>
 			<label index="confirm_label">Confirm</label>
 			<label index="decline_label">Decline</label>
-			<label index="error_captcha">Please enter the correct value for field ####1###</label>
-			
 		</languageKey>
 		<languageKey index="de" type="array">
+			<label index="list_mode_1">Mode 1</label>
+			<label index="list_mode_2">Mode 2</label>
+			<label index="list_mode_3">Mode 3</label>
+			<label index="back">Zurück</label>
+			<label index="submit_button_label">Absenden</label>
 			<label index="required_error">Das Feld '###1###' benötigt auch das Feld '###2###'</label>
 			<label index="not_enter">Das Feld '###1###' wurde nicht gesetzt.</label>
 			<label index="unique_error">Der Wert in Feld ###1### ist schon vergeben, bitte setzen Sie einen anderen.</label>
@@ -47,7 +48,7 @@
 			<label index="email_error">Die Email Adresse ist nicht gültig.</label>
 			<label index="username_error">Der Benutzername ist ungültig. Er muss mindestens 6 Zeichen (davon mind. einen Buchstaben und eine Ziffer) enthalten. Großbuchstaben und Leerzeichen sind nicht erlaubt.</label>
 			<label index="password_error">Das eingegebene Passwort ist ungültig. Es muss mindestens 6 Zeichen (davon mind. einen Groß- und einen Kleinbuchstaben und eine Ziffer) enthalten. Leerzeichen sind nicht erlaubt.</label>
-			<label index="pattern_error">Das folgende Pflichtfeld ist nicht gefüllt:###1###</label>
+			<label index="pattern_error">Das folgende Pflichtfeld ist nicht gefüllt:</label>
 			<label index="admin_error">Internal Error, Please define pi.config.username, pi.config.password, pi.config.pid</label>
 			<label index="banned">Deine Registrierung wurde nicht akzeptiert.</label>
 			<label index="checkbox_error">Bitte markiere die folgende Checkbox: ###1###</label>
@@ -63,14 +64,13 @@
 			<label index="field_email">Email Adresse</label>
 			<label index="field_email_tooltip">Bitte geben Sie eine gültige Email Adresse an.</label>
 			<label index="submit_label">Speichern</label>
+	
 			<label index="emptyOptionLabel">-</label>
 			<label index="not_enter_file">Bitte wählen Sie eine Datei für ###1###</label>
 			<label index="wrong_filetype">Die Datei in ###1### entspricht nicht den erlaubten Dateitypen (###2###)</label>
 			<label index="wrong_filesize">Die Datei in ###1### ist zu groß: die maximal erlaubte Dateigröße beträgt (###2###) Bytes</label>
-			<label index="username_error">Das Feld '###1###' darf keine Grossbuchstaben enthalten</label>
 			<label index="confirm_label">Bestätigen</label>
 			<label index="decline_label">Ablehnen</label>
-			<label index="error_captcha">Bitte geben Sie den korrekten Wert in das Feld ####1### ein</label>
 		</languageKey>
 	</data>
 </T3locallang>

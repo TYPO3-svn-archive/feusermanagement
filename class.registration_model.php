@@ -1,6 +1,4 @@
 <?php
-
-	
 	class tx_feusermanagement_model {
 		var $fields=array();
 		/**
@@ -25,13 +23,10 @@
 			$fields=array();
 			if (!is_array($TSfields)) return $fields;
 			$dataMap=$this->getDataMap($obj);
-			
-			foreach($TSfields as $key=>$TSAttributes) {
-				
+			foreach($TSfields as $key=>$TSAttributes) {	
 				$i++;
 				$name=$obj->removeDot($key);
 				if (array_key_exists($name,$this->fields)) {
-				
 					$fields[$name]=&$this->fields[$name];
 					continue;
 				}
@@ -51,18 +46,15 @@
 					if (array_key_exists('options.',$TSAttributes)&&is_array($TSAttributes['options.'])) {
 						$TSOptions=$TSAttributes['options.'];
 						foreach($TSOptions as $key=>$TSoption) {
-
 							if (is_array($TSoption)) {
 								if (array_key_exists('label',$TSoption)&&array_key_exists('value',$TSoption)) {
 									$field->list[]=$TSoption;
 								}
 							}
 						}
-
 					}
 					if (!count($field->list)) {
 						if ($TSRelation=$TSAttributes['relation.']) {
-							
 							if (($table=$TSRelation['table']) && ($valueField=$TSRelation['value_field']) && ($labelField=$TSRelation['label_field'])) {
 								if ($where=$TSRelation['where']) $where=' AND '.$where;
 								$efFields=$obj->cObj->enableFields($table);
@@ -98,25 +90,19 @@
 				if (array_key_exists("regExp",$TSAttributes)) $field->regExp=$TSAttributes["regExp"];
 				
 				if ($load_data) {
-					
 					if (!$field->value) $field->value=$obj->getValueFromSession($field);
-					
 					if (!$field->value && $obj->prefixId=='tx_feusermanagement_pi2') {
 						//load Data From fe_user
-
 						$maparr=getTSValue('feuser_map',$obj->conf);
-						
 						foreach($maparr as $fe_name=>$field_name) {
 							if ($field_name==$field->name) {
 								$sql='SELECT '.$fe_name.' FROM fe_users WHERE uid="'.$obj->feuser_uid.'"';
 								$res=$GLOBALS['TYPO3_DB']->sql_query($sql);
 								if ($row = $GLOBALS['TYPO3_DB']->sql_fetch_assoc($res)) {
-									$field->value=$row[$fe_name];
-									
+									$field->value=$row[$fe_name];	
 								}
 							}
 						}
-
 						if (is_array($GLOBALS['TYPO3_CONF_VARS']['EXTCONF'][$obj->extKey]['loadData'])) {
 							foreach($GLOBALS['TYPO3_CONF_VARS']['EXTCONF'][$obj->extKey]['loadData'] as $userFunc) {
 
@@ -135,7 +121,6 @@
 				$field->TS=$TSAttributes;
 				$field->tempID=$i;
 				$this->fields[$name]=$field;
-				
 				$fields[$name]=&$this->fields[$name];
 				
 
@@ -157,7 +142,7 @@
 			$count=$obj->getLastStepNr();
 			for ($i=0;$i<=$count;$i++) {
 				
-				$allFields=array_merge($allFields,$this->getCurrentFields($obj->conf["steps."][$i."."],$obj,$load_data));
+				$allFields=array_merge($allFields,$this->getCurrentFields($obj->conf["steps."][($i)."."],$obj,$load_data));
 			}
 			return $allFields;
 		}
@@ -176,7 +161,6 @@
 		}
 	function getValueFromSession($key,tslib_pibase &$obj) {
 			$sesArr=$GLOBALS["TSFE"]->fe_user->getKey('ses',$obj->prefixId);
-			
 			if (is_array($sesArr)) return $sesArr[$key];
 			return false;
 		}
@@ -189,6 +173,7 @@
 		function clearValuesInSession($obj) {
 			$GLOBALS['TSFE']->fe_user->setKey('ses',$obj->prefixId,false);
 			$GLOBALS["TSFE"]->fe_user->setKey('ses','ccm_reg_max_step',false);
+			$GLOBALS['TSFE']->fe_user->storeSessionData();
 		}
 		function secureDataBeforeInsertUpdate($value,$obj=null) {
 			if (is_array($value)) {

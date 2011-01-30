@@ -287,25 +287,21 @@ function '.$obj->prefixId.'_check_FormSubmit() {
 	 * @return	[type]		...
 	 */
 	function fillMarkers(&$allFields,$markerArr,$obj) {
-		
+		$markerArr['###GLOBAL_ERROR_MARKER###']='';
 		foreach($allFields as $field) {
-			
 			$temp='';
 			$onBlur='';
 			if (!$field->value) {
 				$field->value=$obj->piVars[$field->htmlID];
 				if (!$field->value) $field->value=$obj->getValueFromSession($field);
+				
 			}
-			#$stdWrapConf=getTSValue('value.stdWrap',$field->TS);
 			$stdWrapConf=getTSValue('value',$field->TS);
 			$field->value=$obj->cObj->stdWrap($field->value,$stdWrapConf);
 			
 			$field->label=$obj->cObj->stdWrap($field->label,$field->TS['label.']);
-			if ($field->type=='hidden') {
-				#t3lib_div::debug($field);
-				#t3lib_div::debug($stdWrapConf);
-			}
 			if ($field->onBlurValidation) $onBlur=" onblur='test".$field->htmlID."(this.value)' ";
+			
 			switch ($field->type) {
 				case "text":
 
@@ -321,6 +317,7 @@ function '.$obj->prefixId.'_check_FormSubmit() {
 						if ($field->emptyLabel) $emptyLabel=$field->emptyLabel;
 						$temp.='<option value="0">'.$emptyLabel.'</option>';
 					}
+					
 					foreach ($field->list as $arr) {
 						$selected=($field->value==$arr['value'])?'selected="selected"':'';
 						$temp.='<option value="'.$arr["value"].'" '.$selected.'>'.$obj->getString($arr["label"]).'</option>';
@@ -356,7 +353,9 @@ function '.$obj->prefixId.'_check_FormSubmit() {
 					break;
 				case "checkbox":
 					$checked="";
-					if ($obj->piVars[$field->htmlID]||($obj->getValueFromSession($field))) $checked='checked="checked"';
+					
+					if ($obj->piVars[$field->htmlID]||($field->value)) $checked='checked="checked"';
+					if ((array_key_exists($field->htmlID,$obj->piVars) && !$obj->piVars[$field->htmlID])||!$field->value) $checked='';
 					$temp='<input type="checkbox" name="'.$obj->prefixId.'['.$field->htmlID.']" id="'.$field->htmlID.'" value="1"  title="'.$field->tooltip.'" '.$checked.' />';
 					break;
 				case "password":
@@ -372,10 +371,9 @@ function '.$obj->prefixId.'_check_FormSubmit() {
 			$markerArr["###".$field->markerName."###"]=$temp;
 			$markerArr["###".$field->markerName."_LABEL###"]=$field->label;
 			$markerArr["###".$field->markerName."_REQUIRED###"]=($field->required)?$obj->requiredMarker:"";
-			
 			$markerArr["###".$field->markerName."_ERROR###"]='';
-			$globalErrMsgCount=array_key_exists('globalErrMsgCount',$obj->conf['config.'])?getTSValue('config.globalErrMsgCount',$obj->conf):5;
 			
+			$globalErrMsgCount=array_key_exists('globalErrMsgCount',$obj->conf['config.'])?getTSValue('config.globalErrMsgCount',$obj->conf):5;
 			if (count($field->errMessages) && $globalErrMsgCount>$obj->errCount) {
 				$obj->errCount++;
 				$errString='';
