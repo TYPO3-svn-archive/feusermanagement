@@ -86,8 +86,12 @@
 				if (array_key_exists("label",$TSAttributes)) $field->label=$obj->getString($TSAttributes["label"]);
 				if (array_key_exists("tooltip",$TSAttributes)) $field->tooltip=$obj->getString($TSAttributes["tooltip"]);
 				if (array_key_exists("unique",$TSAttributes)) $field->unique=$TSAttributes["unique"];
+				if (array_key_exists("uniqueInPid",$TSAttributes)) $field->uniqueInPid=$TSAttributes["uniqueInPid"];
+				if (array_key_exists("uniqueUseEnableFields",$TSAttributes)) $field->uniqueUseEnableFields=$TSAttributes["uniqueUseEnableFields"];
 				if (array_key_exists("equal",$TSAttributes)) $field->equal=$TSAttributes["equal"];
 				if (array_key_exists("regExp",$TSAttributes)) $field->regExp=$TSAttributes["regExp"];
+
+				
 				
 				if ($load_data) {
 					if (!$field->value) $field->value=$obj->getValueFromSession($field);

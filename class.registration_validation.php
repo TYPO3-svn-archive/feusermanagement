@@ -11,7 +11,7 @@
 			if ($field->type=='upload') {
 				$valid=$valid&&$this->validateFileUpload($field,$obj);
 			}
-			if ($field->unique) {
+			if ($field->unique||$field->uniqueInPid) {
 				$valid=$valid&&$this->validateUnique($field,$obj);
 			}
 			if ($field->equal) {
@@ -61,12 +61,22 @@
 			}
 			$unique=true;
 			foreach ($uniqueDBFields as $db_name) {
-				$efFields=$obj->cObj->enableFields('fe_users');
+				if ($field->uniqueUseEnableFields) {
+					$efFields=$obj->cObj->enableFields('fe_users');
+				} else {
+					$efFields='';
+				}
 				$filterOwnUser='';
 				if ($obj->prefixId=='tx_feusermanagement_pi2') {
 					$filterOwnUser=' AND NOT uid="'.$GLOBALS['TSFE']->fe_user->user['uid'].'"';
 				}
-				$sql='SELECT * FROM fe_users WHERE '.$db_name.'="'.$value.'" '.$efFields.$filterOwnUser;
+				if ($field->uniqueInPid&&!$field->unique) {
+					$filterPid=' AND pid IN('.$field->uniqueInPid.')';
+				} else {
+					$filterPid='';
+				}
+				$sql='SELECT * FROM fe_users WHERE '.$db_name.'="'.$value.'" '.$efFields.$filterOwnUser.$filterPid;
+				
 				$res=$GLOBALS['TYPO3_DB']->sql_query($sql);
 				if ($row=$GLOBALS['TYPO3_DB']->sql_fetch_assoc($res)) {
 					$unique=false;

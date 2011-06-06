@@ -20,12 +20,15 @@ MARKERS:
 
 <!--###STEP_1### begin -->
 <h2>Please register</h2>
+###GLOBAL_ERROR_MARKER###
 ###FORM_BEGIN###
 <div>
 	###USERNAME### &nbsp;###USERNAME_LABEL######USERNAME_REQUIRED###<br>
 	###USERNAME_ERROR###
 	###PASSWORD### &nbsp;###PASSWORD_LABEL######PASSWORD_REQUIRED###<br>
 	###PASSWORD_ERROR###
+	###PASSWORD2### &nbsp;###PASSWORD2_LABEL######PASSWORD2_REQUIRED###<br>
+	###PASSWORD2_ERROR###
 	###EMAIL### &nbsp;###EMAIL_LABEL######EMAIL_REQUIRED###<br>
 	###EMAIL_ERROR###
 	###ATTD_COUNTRY### ###ATTD_COUNTRY_ERROR###
@@ -41,6 +44,9 @@ MARKERS:
 ###FORM_BEGIN###
 <div>
 	You are coming from ###ATTD_COUNTRY_VALUE###<br>
+	Please enter your surname: <br>
+	###SURNAME### ###SURNAME_LABEL###<br>
+	###SURNAME_ERROR###
 	Please tell us, where you know us from:<br>
 	###WIEERFAHREN### ###WIEERFAHREN_LABEL###<br>
 	###WIEERFAHREN_ERROR###<br>
