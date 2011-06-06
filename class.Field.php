@@ -23,11 +23,14 @@ class tx_feusermanagement_field {
 		public $TS=array();
 		public $type='text';
 		public $unique=0;
+		public $uniqueInPid=0;
+		public $uniqueUseEnableFields=0;
 		public $validation;
 		public $regExp;
 		public $value;
 		public $includeEmptyOption;
 		public $emptyLabel='';
 		public $dbName='';
+		
 	}
 ?>

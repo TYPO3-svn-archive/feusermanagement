@@ -23,4 +23,8 @@ t3lib_extMgm::addPlugin(array('LLL:EXT:feusermanagement/locallang_db.xml:tt_cont
 
 
 t3lib_extMgm::addStaticFile($_EXTKEY,"pi2/static/","CCM Registration Edit Profile");
+
+t3lib_div::loadTCA('tt_content');
+$TCA['tt_content']['types']['list']['subtypes_excludelist'][$_EXTKEY.'_pi3']='layout,select_key';
+t3lib_extMgm::addPlugin(array('LLL:EXT:feusermanagement/locallang_db.xml:tt_content.list_type_pi3', $_EXTKEY.'_pi3'),'list_type');
 ?>

@@ -67,7 +67,7 @@ class tx_feusermanagement_pibase extends tslib_pibase {
 	 * @param	[type]		$key: ...
 	 * @return	[type]		...
 	 */
-	function getValuesFromUserMapString($string) {
+	function getValuesFromUserMapString($string,$dontLoadData=0) {
 		
 		$allFields=$this->modelLib->getAllFields($this);		
 		$arr=explode('+',$string);
@@ -77,7 +77,11 @@ class tx_feusermanagement_pibase extends tslib_pibase {
 				$content.=mysql_real_escape_string(substr($key,1,strlen($key)-2));
 			} else {
 				if (array_key_exists($key,$allFields)) {
-					$val=$this->getValueFromSession($allFields[$key]);
+					if ($dontLoadData) {
+						$val=$this->getValueFromSession($allFields[$key],0);
+					} else {
+						$val=$this->getValueFromSession($allFields[$key]);
+					}
 					if (is_array($val)) $val=implode(',',$val);
 					$content.=$val;
 				}
@@ -97,12 +101,15 @@ class tx_feusermanagement_pibase extends tslib_pibase {
 	 */
 	function writeLastStepToSession($step,$dontWriteEmptyPassword=false) {
 		$fields=$this->modelLib->getCurrentFields($this->conf['steps.'][$step.'.'],$this);
-		foreach($fields as $field) {			
+		foreach($fields as $field) {
+			
 			$id=$field->htmlID;
 			if (isset($this->piVars[$id]) || $field->type=="checkbox") {
 				$value=$this->piVars[$id];
 				if (!$value && $dontWriteEmptyPassword && $field->type=='password') continue;
+				
 				$this->modelLib->saveValueToSession($field->name,$value,$this);
+				
 				### HOOK afterValueInsert ###
 				if (is_array($GLOBALS['TYPO3_CONF_VARS']['EXTCONF'][$this->extKey]['afterValueInsert'])) {
 					foreach($GLOBALS['TYPO3_CONF_VARS']['EXTCONF'][$this->extKey]['afterValueInsert'] as $userFunc) {

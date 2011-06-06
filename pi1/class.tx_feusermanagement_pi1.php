@@ -83,7 +83,15 @@ class tx_feusermanagement_pi1 extends tx_feusermanagement_pibase {
 		}
 		$start_registration=false;
 		$checkInput=true;
-		
+		### HOOK edit Configuration ###
+		if (is_array($GLOBALS['TYPO3_CONF_VARS']['EXTCONF'][$this->extKey]['editConfiguration'])) {
+			foreach($GLOBALS['TYPO3_CONF_VARS']['EXTCONF'][$this->extKey]['editConfiguration'] as $userFunc) {
+				$params = array(
+					'config' => &$this->conf
+				);
+				t3lib_div::callUserFunction($userFunc, $params, $this);
+			}
+		}
 		
 		### SPRUNG AUF VORGÄNGERSEITE? ###
 		if ($this->piVars['backlinkToStep']&&$GLOBALS["TSFE"]->fe_user->getKey('ses','ccm_reg_step')) { ###SESSION EXISTIERT, UND ER WILL ZURÜCK ###
@@ -103,6 +111,8 @@ class tx_feusermanagement_pi1 extends tx_feusermanagement_pibase {
 			$content=$this->renderAdminConfirmation($this->piVars["adminAction"],$this->piVars["token"]);
 			return $this->pi_wrapInBaseClass($content);
 		}
+		########### VALIDATION ###########
+		
 		if (!$GLOBALS["TSFE"]->fe_user->getKey('ses','ccm_reg_step')) { ### new registration ###
 			$start_registration=true;
 			$GLOBALS["TSFE"]->fe_user->setKey('ses','ccm_reg_step',1);
@@ -167,7 +177,6 @@ class tx_feusermanagement_pi1 extends tx_feusermanagement_pibase {
 		#	t3lib_div::debug($this->modelLib->getValueFromSession($field->name,$this),$field->name);
 		}
 		$markerArr["###SUBMIT###"]='<input type="submit" value="'.$this->pi_getLL('submit_label','',FALSE).'" />';
-		
 
 		###OLD VALUES###
 		$markerArr=$this->viewLib->fillMarkers($allFields,$markerArr,$this);
@@ -185,14 +194,15 @@ class tx_feusermanagement_pi1 extends tx_feusermanagement_pibase {
 			foreach($GLOBALS['TYPO3_CONF_VARS']['EXTCONF'][$this->extKey]['fillMarker'] as $userFunc) {
 				$params = array(
 					'uid' => $this->uid,
-					'markers' => $markerArr,
+					'markers' => &$markerArr,
 					'step' => $step,
 				);
 				if (is_array($tempMarkers = t3lib_div::callUserFunction($userFunc, $params, $this))) {
-					$markerArr=array_merge($markerArr,$tempMarkers);
+					if (is_array($tempMarkers)) $markerArr=array_merge($markerArr,$tempMarkers);
 				}
 			}
 		}
+
 		if ($final) {
 			$content=str_replace(array_keys($markerArr),$markerArr,$finalTempl);
 			$this->userMailTemplate=str_replace(array_keys($markerArr),$markerArr,$this->userMailTemplate);
@@ -211,7 +221,6 @@ class tx_feusermanagement_pi1 extends tx_feusermanagement_pibase {
 			</script>
 		';
 		$GLOBALS['TSFE']->additionalHeaderData['feusermanagementjs']=$js;
-		
 		return $this->pi_wrapInBaseClass($content);
 	}
 
@@ -222,32 +231,28 @@ class tx_feusermanagement_pi1 extends tx_feusermanagement_pibase {
 	 * @return	[type]		...
 	 */
 	function validateInputLastStep($step,$dontCheckPassword=false) {
-
 		$fields=$this->modelLib->getCurrentFields($this->conf["steps."][$step."."],$this);
 		$valid=true;
 		foreach($fields as $field) {
-			#if ($dontCheckPassword&&$field->type=='password') continue;
 			$valid=$this->validateLib->validateField($field,$this,$dontCheckPassword)&&$valid;
 		}
-		### HOOK stepValidation ###
+		### HOOK stepValidation ###	
 		if (is_array($GLOBALS['TYPO3_CONF_VARS']['EXTCONF'][$this->extKey]['stepValidation'])) {
 			foreach($GLOBALS['TYPO3_CONF_VARS']['EXTCONF'][$this->extKey]['stepValidation'] as $userFunc) {
 				$params = array(
 					'step' => $step,
-					'fields'=>$fields,
+					'fields'=>&$fields,
 					'valid'=>$valid,
 				);
 				$valid=t3lib_div::callUserFunction($userFunc, $params, $this);
+				
 			}
-		}
+		}	
 		return $valid;
 	}
 
-
-
 	function getValueFromSession($field,$dummy=0) {
 		$sesVal=$this->modelLib->getValueFromSession($field->name,$this);
-		
 		if ($sesVal) return $sesVal;
 		if ($field->value) return $field->value; //Wert der übers Typoscript übergeben wurde, für z.B. Hidden-Fields
 		return;
@@ -259,10 +264,11 @@ class tx_feusermanagement_pi1 extends tx_feusermanagement_pibase {
 	 * @return	[type]		...
 	 */
 	function createNewFEUser() {
-
 		$allFields=$this->modelLib->getAllFields($this);
+		
 		$map=array();
 		$maparr=getTSValue('feuser_map',$this->conf);
+		
 		foreach($maparr as $fe_name=>$field_name) {
 			$currField=$allFields[$field_name];
 			// If Upload-File Special handling is needed
@@ -274,7 +280,6 @@ class tx_feusermanagement_pi1 extends tx_feusermanagement_pibase {
 					$path=t3lib_div::getIndpEnv('TYPO3_DOCUMENT_ROOT').'/'.$this->uploadDir;
 					$newName=$this->modelLib->getFreeFilename($path,$origFilename,$this->conf['config.']['upload_file_prefix']);
 					move_uploaded_file($tempFilename,$path.$newName);
-					#$map[$fe_name]=$this->modelLib->secureDataBeforeInsertUpdate($this->uploadDir.$newName);
 					$map[$fe_name]=$this->modelLib->secureDataBeforeInsertUpdate($newName);
 				} 
 				
@@ -314,9 +319,7 @@ class tx_feusermanagement_pi1 extends tx_feusermanagement_pibase {
 		$pid=getTSValue('config.usersFreshPid',$this->conf);
 		$group=getTSValue('config.usersFreshGroup',$this->conf);
 		if ((!isset($pid))) {
-
 			$this->adminError=$this->pi_getLL('admin_error','',FALSE);
-
 			return false;
 		}
 		$disabled=0;
@@ -324,9 +327,8 @@ class tx_feusermanagement_pi1 extends tx_feusermanagement_pibase {
 			$disabled=1;
 		}
 		$zeit=time();
-
-		$sql="INSERT INTO fe_users (pid,usergroup,disable,tstamp,crdate".$keys.") VALUES('$pid','$group','$disabled','$zeit','$zeit'".$values.")";
 		
+		$sql="INSERT INTO fe_users (pid,usergroup,disable,tstamp,crdate".$keys.") VALUES('$pid','$group','$disabled','$zeit','$zeit'".$values.")";
 		$GLOBALS['TYPO3_DB']->sql_query($sql);
 		$id=$GLOBALS['TYPO3_DB']->sql_insert_id ();
 		
@@ -365,19 +367,22 @@ class tx_feusermanagement_pi1 extends tx_feusermanagement_pibase {
 							t3lib_div::callUserFunction($userFunc, $params, $this);
 						}
 					}
-					header('Location: '.$url);
-					
+					header('Location: '.$url);	
 				}
 			}
 		}
-
+		if (false && $redirPid=getTSValue('config.redirPid',$this->conf)) {
+			$url=$this->baseURL.$this->cObj->getTypoLink_URL($redirPid);
+			header('Location: '.$url);
+		}
 		if (getTSValue('config.userConfirmation',$this->conf)) {
 			tx_feusermanagement_mailer::generateUserMailConfirmation($id,$this);
 		} else {
 			//FIXME: Check Parameter 
 			###if ($this->requireAdminConfirm) $this->generateAdminMailUserConfirmation($row); 
 		}
-		if (getTSValue('config.userNotify',$this->conf)) tx_feusermanagement_mailer::generateUserMailNotify($id);
+		//NOTE: hier am ende $this eingefügt >> dkoehl
+		if (getTSValue('config.userNotify',$this->conf)) tx_feusermanagement_mailer::generateUserMailNotify($id, $this);
 	}
 
 	
@@ -397,6 +402,7 @@ class tx_feusermanagement_pi1 extends tx_feusermanagement_pibase {
 			if(preg_match('/\A[0-9]+\.\z/',$key)) {
 				$label=getTSValue('steps.'.$key.'label',$this->conf);
 				$step=str_replace('.','',$key);
+		
 				if ($this->currStep>$step) {
 					$html='<a href="'.$this->cObj->getTypoLink_URL($GLOBALS['TSFE']->id,array($this->prefixId.'[backlinkToStep]'=>$step)).'" class="oldstep">'.$label.'</a>';
 				}
@@ -409,6 +415,7 @@ class tx_feusermanagement_pi1 extends tx_feusermanagement_pibase {
 				$steps[$key]=$html;
 			}
 		}
+		return array('<div class="backlink"><a href="'.$this->cObj->getTypoLink_URL($GLOBALS['TSFE']->id,array($this->prefixId.'[backlinkToStep]'=>$step)).'">'.getTSValue('steps.1.label',$this->conf).'</a></div>');
 		return $steps;
 		//FIXME: mehrstufig grad nicht möglich
 		$inactiveTS=getTSValue('config.progressList.inactive.',$this->conf);
@@ -466,7 +473,6 @@ class tx_feusermanagement_pi1 extends tx_feusermanagement_pibase {
 		$token=mysql_real_escape_string($token);
 		$feuser_uid=(int)$this->piVars['fe_user'];
 		$sql='SELECT * FROM fe_users WHERE uid='.$feuser_uid.' AND registration_token="'.$token.'"';
-
 		$res=$GLOBALS['TYPO3_DB']->sql_query($sql);
 		if ($row = $GLOBALS['TYPO3_DB']->sql_fetch_assoc($res)) {
 			$pid=getTSValue('config.usersConfirmedPid',$this->conf);
@@ -484,9 +490,20 @@ class tx_feusermanagement_pi1 extends tx_feusermanagement_pibase {
 			}
 			$content=str_replace(array_keys($markerArr),$markerArr,$content);
 			if ($this->requireAdminConfirm) tx_feusermanagement_mailer::generateAdminMailUserConfirmation($row,$this);
-
+			### HOOK afterregistration ###
+			if (is_array($GLOBALS['TYPO3_CONF_VARS']['EXTCONF'][$this->extKey]['feuser_confirm'])) {
+				foreach($GLOBALS['TYPO3_CONF_VARS']['EXTCONF'][$this->extKey]['feuser_confirm'] as $userFunc) {
+					$params = array(
+						'action' => 'confirmation',
+						'uid'=>$feuser_uid,
+						'oldUserData'=>$row,
+						'token'=>$token
+					);
+					t3lib_div::callUserFunction($userFunc, $params, $this);
+				}
+			}
 		} else {
-			$content="ungültiger Token";
+			$content = $this->pi_getLL('invalid_token','Your token is invalid');
 		}
 		return $content;
 	}
@@ -529,8 +546,17 @@ class tx_feusermanagement_pi1 extends tx_feusermanagement_pibase {
 				$content='User Deleted';
 			}
 		} else {
-
-			$content='ungültiger Token';
+            if ($this->conf['error_pages.invalid_token']) {
+                $pid = $this->conf['error_pages.invalid_token'];
+                $addParams='';
+                $url=$this->cObj->typoLink_URL(array('parameter'=>$pid,'additionalParams'=>$addParams));
+                if ($GLOBALS['redir_done']) return;
+                $GLOBALS['redir_done']=1;
+                $redirUrl = t3lib_div::locationHeaderUrl($url);
+                header('Location: '.$redirUrl);
+            }
+            $meldung = ($GLOBALS['TSFE']->sys_language_uid==3) ? 'Account wurde bereits bestätigt.':'Account already registered. '; 
+            $content=$meldung;
 		}
 		return $content;
 	}

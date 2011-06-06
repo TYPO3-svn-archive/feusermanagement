@@ -15,13 +15,13 @@ plugin.tx_feusermanagement_pi1 {
     usersAdminConfirmedPid=0
     usersAdminConfirmedGroup=0
 
-		# default fe_user image folder, see: $TCA['fe_users']['columns']['image']['config']['uploadfolder']
-		# if you change in TS, also change TCA
-	#upload_dir = uploads/pics
+    # default fe_user image folder, see: $TCA['fe_users']['columns']['image']['config']['uploadfolder']
+    # if you change in TS, also change TCA
+  #upload_dir = uploads/pics
 
     userConfirmation=1
     adminConfirmation=0
-    		#only works if confirmation is not required
+        #only works if confirmation is not required
     autologin=1
     autologinRedirPid=1
     formNoSubmitAction=alert(alertMessage);
@@ -60,12 +60,25 @@ plugin.tx_feusermanagement_pi1 {
         jsvalidation=1
         onBlurValidation=1
       }
+      
+    }
+    2.label=tata
+    2.fields {
       surname {
         type=text
         label=Your Surname
       }
       meinbild {
-      	type=upload
+        type=upload
+      }
+      wieerfahren {
+        type=radio
+        options {
+          1.label=A friend recommended us
+          1.value=friends
+          2.label=Websearch (e.g. google)
+          2.value=websearch
+        }
       }
     }
   }

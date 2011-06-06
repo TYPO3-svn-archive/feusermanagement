@@ -4,7 +4,6 @@
 		function validateField(&$field,&$obj,$dontCheckPassword=false) {
 			
 			if ($dontCheckPassword&&$field->type=='password'&&!strlen($obj->piVars[$field->htmlID])) return true;
-			
 			$valid=true;
 			if ($field->required) {
 				$valid=$valid&&$this->validateRequire($field,$obj);
@@ -12,13 +11,13 @@
 			if ($field->type=='upload') {
 				$valid=$valid&&$this->validateFileUpload($field,$obj);
 			}
-			if ($field->unique) {
+			if ($field->unique||$field->uniqueInPid) {
 				$valid=$valid&&$this->validateUnique($field,$obj);
 			}
 			if ($field->equal) {
 				$valid=$valid&&$this->validateEquality($field,$obj);
 			}
-			if ($field->validation) {
+			if ($field->validation && $obj->piVars[$field->htmlID]) {
 				switch ($field->validation) {
 					case "email":
 						$pattern = '/'.$obj->viewLib->emailReg.'/';
@@ -46,10 +45,10 @@
 						break;
 				}
 			}
-			
 			return $valid;
 		}
 		private function validateUnique(&$field,&$obj) {
+			
 			$valid=true;
 			$value=mysql_real_escape_string($obj->piVars[$field->htmlID]);
 
@@ -62,12 +61,22 @@
 			}
 			$unique=true;
 			foreach ($uniqueDBFields as $db_name) {
-				$efFields=$obj->cObj->enableFields('fe_users');
+				if ($field->uniqueUseEnableFields) {
+					$efFields=$obj->cObj->enableFields('fe_users');
+				} else {
+					$efFields='';
+				}
 				$filterOwnUser='';
 				if ($obj->prefixId=='tx_feusermanagement_pi2') {
 					$filterOwnUser=' AND NOT uid="'.$GLOBALS['TSFE']->fe_user->user['uid'].'"';
 				}
-				$sql='SELECT * FROM fe_users WHERE '.$db_name.'="'.$value.'" '.$efFields.$filterOwnUser;
+				if ($field->uniqueInPid&&!$field->unique) {
+					$filterPid=' AND pid IN('.$field->uniqueInPid.')';
+				} else {
+					$filterPid='';
+				}
+				$sql='SELECT * FROM fe_users WHERE '.$db_name.'="'.$value.'" '.$efFields.$filterOwnUser.$filterPid;
+				
 				$res=$GLOBALS['TYPO3_DB']->sql_query($sql);
 				if ($row=$GLOBALS['TYPO3_DB']->sql_fetch_assoc($res)) {
 					$unique=false;
@@ -117,19 +126,14 @@
 
 			if (!(isset($obj->piVars[$field->htmlID]) && ($obj->piVars[$field->htmlID]) )&& !($obj->getValueFromSession($field,0))) {
 				if ($field->type=='upload') {
-					#t3lib_div::debug($_FILES[$obj->prefixId]);
-					if ($_FILES[$obj->prefixId]['name'][$field->htmlID]) {
-						
+					if ($_FILES[$obj->prefixId]['name'][$field->htmlID]) {	
 					} else {
 						$valid=false;
 						$field->errMessages[]=$obj->prepareMessage(array($obj->pi_getLL('not_enter_file','',FALSE),$field->label));
-						
 					}
 				} else {
-					
 					$valid=$obj->modelLib->getValueFromSession($field->name,$obj);
 					$field->errMessages[]=$obj->prepareMessage(array($obj->pi_getLL('not_enter','',FALSE),$field->label));
-					
 				}
 			}
 			return $valid;
